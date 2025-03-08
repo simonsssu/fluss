@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @CommandLine.Command(
@@ -46,13 +47,13 @@ public class FlussCliMain extends CmdBase<Integer> {
             System.getProperty("fluss.home", System.getenv("FLUSS_HOME"));
 
     @CommandLine.Option(
-            names = {"-c", "--config"},
+            names = {"--config"},
             description = "Config file path",
             defaultValue = "${FLUSS_HOME}/conf/fluss.conf")
     protected String configPath;
 
     @CommandLine.Option(
-            names = {"-b", "--bootstrap-servers"},
+            names = {"--bootstrap-servers"},
             required = true,
             split = ",",
             description =
@@ -87,27 +88,28 @@ public class FlussCliMain extends CmdBase<Integer> {
         }
     }
 
-    protected void checkConfigPath(String path) {
-        if (!Files.exists(Paths.get(path))) {
+    protected void checkConfigPath() {
+        if (!Files.exists(Paths.get(configPath))) {
             throw new CommandLine.ParameterException(
-                    new CommandLine(this), "Config file not found: " + path);
+                    new CommandLine(this), "Config file not found: " + configPath);
         }
-        this.configPath = path;
     }
 
-    public void checkBootstrapServers(List<String> servers) {
-        if (servers == null || servers.isEmpty()) {
-            throw new CommandLine.ParameterException(
-                    new CommandLine(this), "At least one bootstrap server is required");
-        }
-
-        for (String server : servers) {
-            if (!server.matches(".+:\\d+")) {
-                throw new CommandLine.ParameterException(
-                        new CommandLine(this), "Invalid server format: " + server);
-            }
-        }
-        this.bootstrapServers = servers;
+    public void checkBootstrapServers() {
+        Optional.ofNullable(bootstrapServers).filter(servers -> !servers.isEmpty())
+                .orElseThrow(
+                        () ->
+                                new CommandLine.ParameterException(
+                                        new CommandLine(this),
+                                        "At least one bootstrap server is required"))
+                .stream()
+                .filter(server -> !server.matches(".+:\\d+"))
+                .findFirst()
+                .ifPresent(
+                        server -> {
+                            throw new CommandLine.ParameterException(
+                                    new CommandLine(this), "Invalid server format: " + server);
+                        });
     }
 
     @Override
@@ -129,5 +131,11 @@ public class FlussCliMain extends CmdBase<Integer> {
             logger.error("Command execution failed", ex);
             System.exit(1);
         }
+    }
+
+    @Override
+    protected void checkRequiredArgs() {
+        checkBootstrapServers();
+        checkConfigPath();
     }
 }

@@ -24,4 +24,6 @@ import java.util.concurrent.Callable;
 
 public abstract class CmdBase<T> implements Callable<T> {
     @CommandLine.ParentCommand private FlussCliMain parent;
+
+    protected abstract void checkRequiredArgs();
 }
