@@ -17,6 +17,7 @@
 package com.alibaba.fluss.cli.admin;
 
 import com.alibaba.fluss.cli.FlussCliMain;
+import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
 import com.alibaba.fluss.cli.conn.ConnectionManager;
 import com.alibaba.fluss.client.Connection;
@@ -24,9 +25,17 @@ import com.alibaba.fluss.client.admin.Admin;
 
 import picocli.CommandLine;
 
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+
 public abstract class AdminBaseCmd extends BaseCmd<Integer> {
 
     @CommandLine.ParentCommand private FlussCliMain main;
+
+    public AdminBaseCmd() {
+        CommandLine commandLine = new CommandLine(this);
+        addSubCommands(commandLine);
+    }
 
     protected Connection connection() {
         return ConnectionManager.getConnection(main.getBootstrapServers());
@@ -43,6 +52,27 @@ public abstract class AdminBaseCmd extends BaseCmd<Integer> {
                     "Invalid table path format. Expected: database.table");
         }
         return new String[] {tablePath.substring(0, dotIndex), tablePath.substring(dotIndex + 1)};
+    }
+
+    private void addSubCommands(CommandLine line) {
+        Class<?>[] declaredClasses = this.getClass().getDeclaredClasses();
+        Arrays.stream(declaredClasses)
+                .filter(
+                        clazz ->
+                                clazz.isAnnotationPresent(FlussCmd.class)
+                                        && !Modifier.isAbstract(clazz.getModifiers()))
+                .forEach(
+                        clazz -> {
+                            FlussCmd cmdAnnotation = clazz.getAnnotation(FlussCmd.class);
+                            String cmdName = cmdAnnotation.name();
+                            try {
+                                line.addSubcommand(
+                                        cmdName, clazz.getDeclaredConstructor().newInstance());
+                            } catch (Exception e) {
+                                System.err.println("Failed to create subcommand: " + cmdName);
+                                throw new RuntimeException(e);
+                            }
+                        });
     }
 
     @Override
