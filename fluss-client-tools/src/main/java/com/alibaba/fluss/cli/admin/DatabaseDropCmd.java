@@ -18,7 +18,6 @@ package com.alibaba.fluss.cli.admin;
 
 import com.alibaba.fluss.cli.admin.group.DatabaseGroupCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
-
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "drop", description = "Delete database")
@@ -36,7 +35,7 @@ public class DatabaseDropCmd extends BaseCmd<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        parent.admin()
+        parent.getAdmin()
                 .dropDatabase(dbName, ignoreMissing, cascade)
                 .thenAccept(v -> System.out.println("Database dropped: " + dbName))
                 .exceptionally(handleException("Drop failed"))

@@ -16,15 +16,22 @@
 
 package com.alibaba.fluss.cli.base;
 
-import picocli.CommandLine;
-
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
+import picocli.CommandLine;
 
 public abstract class BaseCmd<T> implements Callable<T> {
 
-    private CommandLine commandLine;
+    private CommandLine cli;
+
+    public BaseCmd() {
+        this.cli = new CommandLine(this);
+    }
+
+    public CommandLine getCli() {
+        return cli;
+    }
 
     protected Function<Throwable, Void> handleException(String context) {
         return ex -> {
@@ -37,4 +44,6 @@ public abstract class BaseCmd<T> implements Callable<T> {
             return null;
         };
     }
+
+    public void attachSubCommand() {}
 }
