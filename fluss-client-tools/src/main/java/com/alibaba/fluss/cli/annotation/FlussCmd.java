@@ -26,5 +26,7 @@ import java.lang.annotation.Target;
 public @interface FlussCmd {
     String name() default "";
 
+    boolean baseSuit() default false;
+
     String description() default "";
 }
