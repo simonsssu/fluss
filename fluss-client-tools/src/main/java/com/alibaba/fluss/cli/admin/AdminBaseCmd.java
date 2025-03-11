@@ -47,7 +47,7 @@ public abstract class AdminBaseCmd extends BaseCmd<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        CommandLine.usage(this, System.out);
+        CoLine.usage(this, System.out);
         return 0;
     }
 }

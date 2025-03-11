@@ -16,15 +16,14 @@
 
 package com.alibaba.fluss.cli.admin;
 
+import static com.alibaba.fluss.cli.admin.group.TableGroupCmd.splitTablePath;
+
 import com.alibaba.fluss.cli.admin.group.TableGroupCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
 import com.alibaba.fluss.metadata.TableDescriptor;
 import com.alibaba.fluss.metadata.TablePath;
-
 import jakarta.validation.constraints.Min;
 import picocli.CommandLine;
-
-import static com.alibaba.fluss.cli.admin.group.TableGroupCmd.splitTablePath;
 
 @CommandLine.Command(name = "create", description = "Create new table")
 public class TableCreateCmd extends BaseCmd<Integer> {
@@ -55,8 +54,6 @@ public class TableCreateCmd extends BaseCmd<Integer> {
         String tableName = parts[1];
         TablePath path = TablePath.of(database, tableName);
         TableDescriptor descriptor = TableDescriptor.builder().build();
-        //                    .withBuckets(buckets)
-        //                    .withReplicationFactor(replicas);
 
         parent.admin()
                 .createTable(path, descriptor, ignoreExisting)
