@@ -16,11 +16,16 @@
 
 package com.alibaba.fluss.cli.base;
 
+import picocli.CommandLine;
+
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 public abstract class BaseCmd<T> implements Callable<T> {
+
+    private CommandLine commandLine;
+
     protected Function<Throwable, Void> handleException(String context) {
         return ex -> {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;

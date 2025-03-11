@@ -64,16 +64,17 @@ public class FlussCliMain extends BaseCmd<Integer> {
             paramLabel = "HOST:PORT")
     public String bootstrapServers;
 
-    static {
+    public FlussCliMain() {
         initializeCommands();
     }
 
     /** Initializes subcommands during class loading. */
-    private static void initializeCommands() {
+    private void initializeCommands() {
         try {
-            Reflections reflections = new Reflections("com.alibaba.fluss.cli");
+            Reflections reflections = new Reflections("com.alibaba.fluss.cli.admin.group");
             reflections.getTypesAnnotatedWith(FlussCmd.class).stream()
                     .sorted(Comparator.comparing(c -> c.getAnnotation(FlussCmd.class).name()))
+                    .filter(c -> c.getAnnotation(FlussCmd.class).baseSuit())
                     .forEach(
                             clazz -> {
                                 try {
