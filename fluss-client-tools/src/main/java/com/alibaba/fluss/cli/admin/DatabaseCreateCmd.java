@@ -19,7 +19,6 @@ package com.alibaba.fluss.cli.admin;
 import com.alibaba.fluss.cli.admin.group.DatabaseGroupCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
 import com.alibaba.fluss.metadata.DatabaseDescriptor;
-
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "create", description = "Create new database")
@@ -39,7 +38,7 @@ public class DatabaseCreateCmd extends BaseCmd<Integer> {
     public Integer call() throws Exception {
         DatabaseDescriptor descriptor = DatabaseDescriptor.builder().comment(description).build();
 
-        parent.admin()
+        parent.getAdmin()
                 .createDatabase(dbName, descriptor, ignoreExisting)
                 .thenApply(
                         v -> {

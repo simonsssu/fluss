@@ -21,19 +21,17 @@ import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
 import com.alibaba.fluss.metadata.TableDescriptor;
 import com.alibaba.fluss.metadata.TablePath;
-
 import com.google.gson.Gson;
 import jakarta.validation.constraints.Min;
 import picocli.CommandLine;
 
 @FlussCmd(name = "table", baseSuit = true)
 @CommandLine.Command(name = "table", description = "Table operations")
-public class TableGroupCmd extends AdminBaseCmd {
+public class TableCmds extends AdminBaseCmd {
 
     @FlussCmd(name = "create")
     @CommandLine.Command(name = "create", description = "Create new table")
-    public static class Create extends BaseCmd<Integer> {
-        @CommandLine.ParentCommand private TableGroupCmd parent;
+    public class Create extends BaseCmd<Integer> {
 
         @CommandLine.Parameters(
                 index = "0",
@@ -62,7 +60,7 @@ public class TableGroupCmd extends AdminBaseCmd {
             TablePath path = TablePath.of(database, tableName);
             TableDescriptor descriptor = TableDescriptor.builder().build();
 
-            parent.admin()
+            getAdmin()
                     .createTable(path, descriptor, ignoreExisting)
                     .thenAccept(v -> System.out.println("Table created: " + tablePath))
                     .exceptionally(handleException("Create failed"))
@@ -73,8 +71,7 @@ public class TableGroupCmd extends AdminBaseCmd {
 
     @FlussCmd(name = "drop")
     @CommandLine.Command(name = "drop", description = "Delete table")
-    public static class Drop extends BaseCmd<Integer> {
-        @CommandLine.ParentCommand private TableGroupCmd parent;
+    public class Drop extends BaseCmd<Integer> {
 
         @CommandLine.Parameters(
                 index = "0",
@@ -90,7 +87,7 @@ public class TableGroupCmd extends AdminBaseCmd {
             String database = parts[0];
             String tableName = parts[1];
             TablePath path = TablePath.of(database, tableName);
-            parent.admin()
+            getAdmin()
                     .dropTable(path, ignoreNotExists)
                     .thenAccept(v -> System.out.println("Table dropped: " + tablePath))
                     .exceptionally(handleException("Drop failed"))
@@ -101,8 +98,7 @@ public class TableGroupCmd extends AdminBaseCmd {
 
     @FlussCmd(name = "info")
     @CommandLine.Command(name = "info", description = "Table info")
-    public static class Info extends BaseCmd<Integer> {
-        @CommandLine.ParentCommand private TableGroupCmd parent;
+    public class Info extends BaseCmd<Integer> {
 
         @CommandLine.Parameters(
                 index = "0",
@@ -115,7 +111,7 @@ public class TableGroupCmd extends AdminBaseCmd {
             String database = parts[0];
             String tableName = parts[1];
             TablePath path = TablePath.of(database, tableName);
-            parent.admin()
+            getAdmin()
                     .getTableInfo(path)
                     .thenAccept(
                             info -> {
@@ -132,8 +128,7 @@ public class TableGroupCmd extends AdminBaseCmd {
 
     @FlussCmd(name = "list")
     @CommandLine.Command(name = "list", description = "List tables")
-    public static class List extends BaseCmd<Integer> {
-        @CommandLine.ParentCommand private TableGroupCmd parent;
+    public class List extends BaseCmd<Integer> {
 
         @CommandLine.Option(
                 names = {"-d", "--database"},
@@ -143,7 +138,7 @@ public class TableGroupCmd extends AdminBaseCmd {
 
         @Override
         public Integer call() throws Exception {
-            parent.admin()
+            getAdmin()
                     .listTables(database)
                     .thenAccept(
                             tables -> {
