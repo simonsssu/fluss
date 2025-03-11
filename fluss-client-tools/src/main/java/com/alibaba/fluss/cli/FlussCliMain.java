@@ -21,12 +21,6 @@ import com.alibaba.fluss.cli.base.BaseCmd;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -35,6 +29,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
 @CommandLine.Command(
         name = "fluss",
@@ -64,12 +62,8 @@ public class FlussCliMain extends BaseCmd<Integer> {
             paramLabel = "HOST:PORT")
     public String bootstrapServers;
 
-    public FlussCliMain() {
-        initializeCommands();
-    }
-
     /** Initializes subcommands during class loading. */
-    private void initializeCommands() {
+    private static void initializeCommands(CommandLine cli) {
         try {
             Reflections reflections = new Reflections("com.alibaba.fluss.cli.admin.group");
             reflections.getTypesAnnotatedWith(FlussCmd.class).stream()
@@ -78,7 +72,12 @@ public class FlussCliMain extends BaseCmd<Integer> {
                     .forEach(
                             clazz -> {
                                 try {
-                                    SUB_COMMANDS.add(clazz.getDeclaredConstructor().newInstance());
+                                    Object cmd = clazz.getConstructor().newInstance();
+                                    String name = clazz.getAnnotation(FlussCmd.class).name();
+                                    if (cmd instanceof BaseCmd) {
+                                        // attach subcommands to main cli.
+                                        cli.addSubcommand(name, ((BaseCmd<?>) cmd).getCli());
+                                    }
                                 } catch (Exception ex) {
                                     handleCommandInitializationError(clazz, ex);
                                 }
@@ -202,7 +201,7 @@ public class FlussCliMain extends BaseCmd<Integer> {
     public static void main(String[] args) {
         try {
             CommandLine cmd = new CommandLine(new FlussCliMain());
-            SUB_COMMANDS.forEach(cmd::addSubcommand);
+            initializeCommands(cmd);
             System.exit(cmd.execute(args));
         } catch (CommandLine.ParameterException ex) {
             ex.getCommandLine().usage(System.err);

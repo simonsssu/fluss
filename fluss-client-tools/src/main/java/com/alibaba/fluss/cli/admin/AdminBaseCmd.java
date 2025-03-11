@@ -22,26 +22,23 @@ import com.alibaba.fluss.cli.base.BaseCmd;
 import com.alibaba.fluss.cli.conn.ConnectionManager;
 import com.alibaba.fluss.client.Connection;
 import com.alibaba.fluss.client.admin.Admin;
-
-import picocli.CommandLine;
-
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import picocli.CommandLine;
 
 public abstract class AdminBaseCmd extends BaseCmd<Integer> {
 
     @CommandLine.ParentCommand private FlussCliMain main;
 
     public AdminBaseCmd() {
-        CommandLine commandLine = new CommandLine(this);
-        addSubCommands(commandLine);
+        attachSubCommand();
     }
 
     protected Connection connection() {
         return ConnectionManager.getConnection(main.getBootstrapServers());
     }
 
-    protected Admin admin() {
+    public Admin getAdmin() {
         return connection().getAdmin();
     }
 
@@ -54,7 +51,8 @@ public abstract class AdminBaseCmd extends BaseCmd<Integer> {
         return new String[] {tablePath.substring(0, dotIndex), tablePath.substring(dotIndex + 1)};
     }
 
-    private void addSubCommands(CommandLine line) {
+    @Override
+    public void attachSubCommand() {
         Class<?>[] declaredClasses = this.getClass().getDeclaredClasses();
         Arrays.stream(declaredClasses)
                 .filter(
@@ -66,8 +64,10 @@ public abstract class AdminBaseCmd extends BaseCmd<Integer> {
                             FlussCmd cmdAnnotation = clazz.getAnnotation(FlussCmd.class);
                             String cmdName = cmdAnnotation.name();
                             try {
-                                line.addSubcommand(
-                                        cmdName, clazz.getDeclaredConstructor().newInstance());
+                                getCli().addSubcommand(
+                                                cmdName,
+                                                clazz.getConstructor(this.getClass())
+                                                        .newInstance(this));
                             } catch (Exception e) {
                                 System.err.println("Failed to create subcommand: " + cmdName);
                                 throw new RuntimeException(e);

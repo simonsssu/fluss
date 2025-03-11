@@ -18,7 +18,6 @@ package com.alibaba.fluss.cli.admin;
 
 import com.alibaba.fluss.cli.admin.group.DatabaseGroupCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
-
 import com.google.gson.Gson;
 import picocli.CommandLine;
 
@@ -37,7 +36,7 @@ public class DatabaseInfoCmd extends BaseCmd<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        parent.admin()
+        parent.getAdmin()
                 .getDatabaseInfo(dbName)
                 .thenAccept(
                         info -> {
