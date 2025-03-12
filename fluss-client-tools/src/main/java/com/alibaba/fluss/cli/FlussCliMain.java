@@ -16,30 +16,37 @@
 
 package com.alibaba.fluss.cli;
 
-import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.admin.cluster.ClusterCmds;
+import com.alibaba.fluss.cli.admin.database.DatabaseCmdMain;
+import com.alibaba.fluss.cli.admin.table.TableCmdMain;
 import com.alibaba.fluss.cli.base.BaseCmd;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
 
 @CommandLine.Command(
         name = "fluss",
         mixinStandardHelpOptions = true,
         version = "0.6.0",
         description = "Fluss Command Line Interface",
-        subcommands = {CommandLine.HelpCommand.class})
+        subcommands = {
+            DatabaseCmdMain.class,
+            TableCmdMain.class,
+            ClusterCmds.class,
+            CommandLine.HelpCommand.class
+        })
 public class FlussCliMain extends BaseCmd<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(FlussCliMain.class);
 
@@ -61,43 +68,6 @@ public class FlussCliMain extends BaseCmd<Integer> {
             description = "Cluster connection endpoints (format: host1:port1,host2:port2)",
             paramLabel = "HOST:PORT")
     public String bootstrapServers;
-
-    /** Initializes subcommands during class loading. */
-    private static void initializeCommands(CommandLine cli) {
-        try {
-            Reflections reflections = new Reflections("com.alibaba.fluss.cli.admin.group");
-            reflections.getTypesAnnotatedWith(FlussCmd.class).stream()
-                    .sorted(Comparator.comparing(c -> c.getAnnotation(FlussCmd.class).name()))
-                    .filter(c -> c.getAnnotation(FlussCmd.class).baseSuit())
-                    .forEach(
-                            clazz -> {
-                                try {
-                                    Object cmd = clazz.getConstructor().newInstance();
-                                    String name = clazz.getAnnotation(FlussCmd.class).name();
-                                    if (cmd instanceof BaseCmd) {
-                                        // attach subcommands to main cli.
-                                        cli.addSubcommand(name, ((BaseCmd<?>) cmd).getCli());
-                                    }
-                                } catch (Exception ex) {
-                                    handleCommandInitializationError(clazz, ex);
-                                }
-                            });
-
-            if (SUB_COMMANDS.isEmpty()) {
-                logger.warn("No subcommands detected in classpath");
-            }
-        } catch (Exception ex) {
-            logger.error("Command auto-registration failed: {}", ex.getMessage());
-            throw new IllegalStateException("Command initialization failure", ex);
-        }
-    }
-
-    /** Handles errors during command initialization. */
-    private static void handleCommandInitializationError(Class<?> clazz, Exception ex) {
-        String errorMsg = String.format("Failed to load command: %s", clazz.getSimpleName());
-        logger.error(errorMsg, ex);
-        System.err.println(errorMsg);
-    }
 
     /** Validates configuration directory existence. */
     protected void checkConfigPath(String path) {
@@ -201,7 +171,6 @@ public class FlussCliMain extends BaseCmd<Integer> {
     public static void main(String[] args) {
         try {
             CommandLine cmd = new CommandLine(new FlussCliMain());
-            initializeCommands(cmd);
             System.exit(cmd.execute(args));
         } catch (CommandLine.ParameterException ex) {
             ex.getCommandLine().usage(System.err);

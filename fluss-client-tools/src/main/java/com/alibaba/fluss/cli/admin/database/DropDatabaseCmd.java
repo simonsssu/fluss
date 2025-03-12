@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.admin;
+package com.alibaba.fluss.cli.admin.database;
 
-import com.alibaba.fluss.cli.admin.group.DatabaseGroupCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "drop", description = "Delete database")
-public class DatabaseDropCmd extends BaseCmd<Integer> {
-    @CommandLine.ParentCommand private DatabaseGroupCmd parent;
+public class DropDatabaseCmd extends BaseCmd<Integer> {
+    @CommandLine.ParentCommand private DatabaseCmdMain parent;
 
     @CommandLine.Parameters(index = "0", description = "Database name")
     private String dbName;

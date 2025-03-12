@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.admin;
+package com.alibaba.fluss.cli.admin.database;
 
-import com.alibaba.fluss.cli.admin.group.DatabaseGroupCmd;
-import com.alibaba.fluss.cli.base.BaseCmd;
+import com.alibaba.fluss.cli.base.AdminBaseCmd;
 import com.alibaba.fluss.metadata.DatabaseDescriptor;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "create", description = "Create new database")
-public class DatabaseCreateCmd extends BaseCmd<Integer> {
-    @CommandLine.ParentCommand private DatabaseGroupCmd parent;
+public class CreateDatabaseCmd extends AdminBaseCmd {
 
     @CommandLine.Parameters(index = "0", description = "Database name")
     private String dbName;
@@ -38,7 +37,7 @@ public class DatabaseCreateCmd extends BaseCmd<Integer> {
     public Integer call() throws Exception {
         DatabaseDescriptor descriptor = DatabaseDescriptor.builder().comment(description).build();
 
-        parent.getAdmin()
+        getAdmin()
                 .createDatabase(dbName, descriptor, ignoreExisting)
                 .thenApply(
                         v -> {

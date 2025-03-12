@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.annotation;
+package com.alibaba.fluss.cli.utils;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface FlussCmd {
-    String name() default "";
-
-    boolean baseSuit() default false;
-
-    String description() default "";
+public class CmdUtils {
+    public static String[] splitTablePath(String tablePath) {
+        int dotIndex = tablePath.indexOf('.');
+        if (dotIndex == -1 || dotIndex == 0 || dotIndex == tablePath.length() - 1) {
+            throw new IllegalArgumentException(
+                    "Invalid table path format. Expected: database.table");
+        }
+        return new String[] {tablePath.substring(0, dotIndex), tablePath.substring(dotIndex + 1)};
+    }
 }
