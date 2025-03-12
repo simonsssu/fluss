@@ -14,38 +14,43 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.admin;
+package com.alibaba.fluss.cli.admin.database;
 
-import com.alibaba.fluss.cli.admin.group.DatabaseGroupCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
+
 import com.google.gson.Gson;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "list", description = "List databases")
-public class DatabaseListCmd extends BaseCmd<Integer> {
+@CommandLine.Command(name = "describe", description = "Describe database details")
+public class DescribeDatabaseCmd extends BaseCmd<Integer> {
+    @CommandLine.ParentCommand private DatabaseCmdMain parent;
 
-    @CommandLine.ParentCommand private DatabaseGroupCmd parent;
+    @CommandLine.Parameters(index = "0", description = "Database name")
+    private String dbName;
 
     @CommandLine.Option(
             names = {"-o", "--output"},
             description = "Output format: text|json",
-            defaultValue = "text")
+            defaultValue = "json")
     private String outputFormat;
 
     @Override
     public Integer call() throws Exception {
         parent.getAdmin()
-                .listDatabases()
+                .getDatabaseInfo(dbName)
                 .thenAccept(
-                        dbs -> {
+                        info -> {
                             if ("json".equalsIgnoreCase(outputFormat)) {
-                                System.out.println(new Gson().toJson(dbs));
+                                System.out.println(new Gson().toJson(info));
                             } else {
-                                System.out.println("Databases:");
-                                dbs.forEach(System.out::println);
+                                System.out.println("Database Name: " + info.getDatabaseName());
+                                System.out.println("Created At: " + info.getCreatedTime());
+                                System.out.println(
+                                        "Database Descriptor: " + info.getDatabaseDescriptor());
+                                System.out.println("Modified Time: " + info.getModifiedTime());
                             }
                         })
-                .exceptionally(handleException("List failed"))
+                .exceptionally(handleException("Info query failed"))
                 .get();
         return 0;
     }

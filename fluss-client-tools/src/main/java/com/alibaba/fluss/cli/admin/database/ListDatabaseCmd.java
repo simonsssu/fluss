@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.admin;
+package com.alibaba.fluss.cli.admin.database;
 
-import com.alibaba.fluss.cli.admin.group.ClusterGroupCmd;
 import com.alibaba.fluss.cli.base.BaseCmd;
+
 import com.google.gson.Gson;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "nodes", description = "List cluster nodes")
-public class ClusterNodesCmd extends BaseCmd<Integer> {
+@CommandLine.Command(name = "list", description = "List databases")
+public class ListDatabaseCmd extends BaseCmd<Integer> {
 
-    @CommandLine.ParentCommand private ClusterGroupCmd parent;
+    @CommandLine.ParentCommand private DatabaseCmdMain parent;
 
     @CommandLine.Option(
             names = {"-o", "--output"},
@@ -35,20 +35,17 @@ public class ClusterNodesCmd extends BaseCmd<Integer> {
     @Override
     public Integer call() throws Exception {
         parent.getAdmin()
-                .getServerNodes()
+                .listDatabases()
                 .thenAccept(
-                        nodes -> {
+                        dbs -> {
                             if ("json".equalsIgnoreCase(outputFormat)) {
-                                System.out.println(new Gson().toJson(nodes));
+                                System.out.println(new Gson().toJson(dbs));
                             } else {
-                                System.out.println("Cluster Nodes:");
-                                nodes.forEach(
-                                        node ->
-                                                System.out.printf(
-                                                        " - %s:%d%n", node.host(), node.port()));
+                                System.out.println("Databases:");
+                                dbs.forEach(System.out::println);
                             }
                         })
-                .exceptionally(handleException("Nodes query failed"))
+                .exceptionally(handleException("List failed"))
                 .get();
         return 0;
     }
