@@ -24,4 +24,4 @@ import picocli.CommandLine;
         name = "cluster",
         description = "Cluster operations",
         subcommands = {ClusterNodesCmd.class, CommandLine.HelpCommand.class})
-public class ClusterCmds extends GroupBaseCmd {}
+public class ClusterCmdGroup extends GroupBaseCmd {}
