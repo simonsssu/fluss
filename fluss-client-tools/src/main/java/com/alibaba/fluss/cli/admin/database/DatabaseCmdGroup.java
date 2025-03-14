@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.admin.table;
+package com.alibaba.fluss.cli.admin.database;
 
-import com.alibaba.fluss.cli.base.AdminBaseCmd;
+import com.alibaba.fluss.cli.base.GroupBaseCmd;
 
 import picocli.CommandLine;
 
 @CommandLine.Command(
-        name = "table",
-        description = "Table operations",
+        name = "database",
+        description = "Database operations",
         subcommands = {
-            CreateTableCmd.class,
-            DescribeTableCmd.class,
-            DropTableCmd.class,
-            ListTableCmd.class
+            CreateDatabaseCmd.class,
+            ListDatabaseCmd.class,
+            DropDatabaseCmd.class,
+            DescribeDatabaseCmd.class,
+            CommandLine.HelpCommand.class
         })
-public class TableCmdMain extends AdminBaseCmd {}
+public class DatabaseCmdGroup extends GroupBaseCmd {}
