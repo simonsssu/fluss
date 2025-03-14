@@ -16,27 +16,22 @@
 
 package com.alibaba.fluss.cli.base;
 
-import com.alibaba.fluss.cli.FlussCliMain;
-import com.alibaba.fluss.cli.conn.ConnectionManager;
-import com.alibaba.fluss.client.Connection;
 import com.alibaba.fluss.client.admin.Admin;
 
 import picocli.CommandLine;
 
+import java.util.function.Supplier;
+
 public abstract class AdminBaseCmd extends BaseCmd<Integer> {
 
-    @CommandLine.ParentCommand private FlussCliMain main;
-
-    protected Connection connection() {
-        return ConnectionManager.getConnection(main.getBootstrapServers());
-    }
+    private Supplier<Admin> adminSupplier;
 
     public Admin getAdmin() {
-        try (Connection connection = connection()) {
-            return connection.getAdmin();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to connect to server", e);
-        }
+        return adminSupplier.get();
+    }
+
+    public void setAdminSupplier(Supplier<Admin> adminSupplier) {
+        this.adminSupplier = adminSupplier;
     }
 
     @Override

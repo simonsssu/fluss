@@ -16,15 +16,13 @@
 
 package com.alibaba.fluss.cli.admin.database;
 
-import com.alibaba.fluss.cli.base.BaseCmd;
+import com.alibaba.fluss.cli.base.AdminBaseCmd;
 
 import com.google.gson.Gson;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "list", description = "List databases")
-public class ListDatabaseCmd extends BaseCmd<Integer> {
-
-    @CommandLine.ParentCommand private DatabaseCmdMain parent;
+public class ListDatabaseCmd extends AdminBaseCmd {
 
     @CommandLine.Option(
             names = {"-o", "--output"},
@@ -34,7 +32,7 @@ public class ListDatabaseCmd extends BaseCmd<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        parent.getAdmin()
+        getAdmin()
                 .listDatabases()
                 .thenAccept(
                         dbs -> {

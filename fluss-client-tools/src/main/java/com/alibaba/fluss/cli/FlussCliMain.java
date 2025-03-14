@@ -16,43 +16,35 @@
 
 package com.alibaba.fluss.cli;
 
-import com.alibaba.fluss.cli.admin.cluster.ClusterCmds;
-import com.alibaba.fluss.cli.admin.database.DatabaseCmdMain;
-import com.alibaba.fluss.cli.admin.table.TableCmdMain;
 import com.alibaba.fluss.cli.base.BaseCmd;
+import com.alibaba.fluss.cli.base.GroupBaseCmd;
+import com.alibaba.fluss.cli.conn.ConnectionManager;
+import com.alibaba.fluss.client.Connection;
+import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
+import com.alibaba.fluss.shaded.guava32.com.google.common.collect.Lists;
 
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @CommandLine.Command(
         name = "fluss",
         mixinStandardHelpOptions = true,
         version = "0.6.0",
-        description = "Fluss Command Line Interface",
-        subcommands = {
-            DatabaseCmdMain.class,
-            TableCmdMain.class,
-            ClusterCmds.class,
-            CommandLine.HelpCommand.class
-        })
+        description = "Fluss Command Line Interface")
 public class FlussCliMain extends BaseCmd<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(FlussCliMain.class);
-
-    // List to hold dynamically discovered subcommands
-    private static final List<Object> SUB_COMMANDS =
-            Collections.synchronizedList(new ArrayList<>());
 
     @CommandLine.Option(
             names = {"-c", "--configDir"},
@@ -68,6 +60,32 @@ public class FlussCliMain extends BaseCmd<Integer> {
             description = "Cluster connection endpoints (format: host1:port1,host2:port2)",
             paramLabel = "HOST:PORT")
     public String bootstrapServers;
+
+    private final Supplier<Admin> adminSupplier;
+
+    private static final List<GroupBaseCmd> SUB_GROUP_CMD = Lists.newArrayList();
+
+    public FlussCliMain() {
+        this.adminSupplier = this::getAdmin;
+        initializeGroupCmd();
+    }
+
+    private void initializeGroupCmd() {
+        Reflections reflections = new Reflections("com.alibaba.fluss.cli");
+        reflections
+                .getSubTypesOf(GroupBaseCmd.class)
+                .forEach(
+                        clazz -> {
+                            try {
+                                GroupBaseCmd cmd = clazz.getDeclaredConstructor().newInstance();
+                                cmd.setAdminSupplier(adminSupplier);
+                                SUB_GROUP_CMD.add(cmd);
+                            } catch (Exception e) {
+                                logger.error(
+                                        "Failed to initialize group command: {}", clazz.getName());
+                            }
+                        });
+    }
 
     /** Validates configuration directory existence. */
     protected void checkConfigPath(String path) {
@@ -167,10 +185,19 @@ public class FlussCliMain extends BaseCmd<Integer> {
         return 0;
     }
 
+    public Admin getAdmin() {
+        try (Connection connection = ConnectionManager.getConnection(getBootstrapServers())) {
+            return connection.getAdmin();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to connect to server", e);
+        }
+    }
+
     /** CLI entry point with proper exit code handling. */
     public static void main(String[] args) {
         try {
             CommandLine cmd = new CommandLine(new FlussCliMain());
+            SUB_GROUP_CMD.forEach(cmd::addSubcommand);
             System.exit(cmd.execute(args));
         } catch (CommandLine.ParameterException ex) {
             ex.getCommandLine().usage(System.err);
