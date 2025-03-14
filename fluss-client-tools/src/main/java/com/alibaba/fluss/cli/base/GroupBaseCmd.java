@@ -16,5 +16,4 @@
 
 package com.alibaba.fluss.cli.base;
 
-public abstract class GroupBaseCmd extends AdminBaseCmd {
-}
+public abstract class GroupBaseCmd extends AdminBaseCmd {}
