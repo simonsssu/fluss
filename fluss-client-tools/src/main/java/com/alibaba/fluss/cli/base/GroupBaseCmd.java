@@ -16,4 +16,16 @@
 
 package com.alibaba.fluss.cli.base;
 
-public abstract class GroupBaseCmd extends AdminBaseCmd {}
+import picocli.CommandLine;
+
+public abstract class GroupBaseCmd extends AdminBaseCmd {
+
+    @Override
+    protected void validateParams() {}
+
+    @Override
+    protected int callCmd() throws Exception {
+        CommandLine.usage(this, System.out);
+        return 0;
+    }
+}

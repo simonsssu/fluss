@@ -29,7 +29,10 @@ public class ListTableCmd extends AdminBaseCmd {
     public String database;
 
     @Override
-    public Integer call() throws Exception {
+    protected void validateParams() {}
+
+    @Override
+    protected int callCmd() throws Exception {
         getAdmin()
                 .listTables(database)
                 .thenAccept(

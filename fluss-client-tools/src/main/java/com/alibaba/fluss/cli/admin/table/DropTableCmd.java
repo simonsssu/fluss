@@ -32,7 +32,10 @@ public class DropTableCmd extends AdminBaseCmd {
     private boolean ignoreNotExists;
 
     @Override
-    public Integer call() throws Exception {
+    protected void validateParams() {}
+
+    @Override
+    protected int callCmd() throws Exception {
         String[] parts = splitTablePath(tablePath);
         String database = parts[0];
         String tableName = parts[1];

@@ -30,7 +30,10 @@ public class DescribeTableCmd extends AdminBaseCmd {
     private String tablePath;
 
     @Override
-    public Integer call() throws Exception {
+    protected void validateParams() {}
+
+    @Override
+    protected int callCmd() throws Exception {
         String[] parts = splitTablePath(tablePath);
         String database = parts[0];
         String tableName = parts[1];
