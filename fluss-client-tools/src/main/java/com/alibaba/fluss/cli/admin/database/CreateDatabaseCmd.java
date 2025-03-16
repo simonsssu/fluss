@@ -34,9 +34,11 @@ public class CreateDatabaseCmd extends AdminBaseCmd {
     private boolean ignoreExisting;
 
     @Override
-    public Integer call() throws Exception {
-        DatabaseDescriptor descriptor = DatabaseDescriptor.builder().comment(description).build();
+    protected void validateParams() {}
 
+    @Override
+    protected int callCmd() throws Exception {
+        DatabaseDescriptor descriptor = DatabaseDescriptor.builder().comment(description).build();
         getAdmin()
                 .createDatabase(dbName, descriptor, ignoreExisting)
                 .thenApply(

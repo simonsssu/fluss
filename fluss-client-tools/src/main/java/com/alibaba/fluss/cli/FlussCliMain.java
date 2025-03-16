@@ -16,7 +16,7 @@
 
 package com.alibaba.fluss.cli;
 
-import com.alibaba.fluss.cli.base.BaseCmd;
+import com.alibaba.fluss.cli.base.AdminBaseCmd;
 import com.alibaba.fluss.cli.base.GroupBaseCmd;
 import com.alibaba.fluss.cli.conn.ConnectionManager;
 import com.alibaba.fluss.client.Connection;
@@ -30,6 +30,7 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -43,23 +44,27 @@ import java.util.function.Supplier;
         mixinStandardHelpOptions = true,
         version = "0.6.0",
         description = "Fluss Command Line Interface")
-public class FlussCliMain extends BaseCmd<Integer> {
+public class FlussCliMain extends AdminBaseCmd {
     private static final Logger logger = LoggerFactory.getLogger(FlussCliMain.class);
 
-    @CommandLine.Option(
-            names = {"-c", "--configDir"},
-            scope = CommandLine.ScopeType.INHERIT,
-            paramLabel = "configuration directory",
-            description = "Directory containing server.yaml configuration file.")
-    public String configDir;
+    @ArgGroup(exclusive = false, multiplicity = "1..*")
+    private MainCmdGroup group;
 
-    @CommandLine.Option(
-            names = {"-b", "--bootstrap-servers"},
-            required = true,
-            scope = CommandLine.ScopeType.INHERIT,
-            description = "Cluster connection endpoints (format: host1:port1,host2:port2)",
-            paramLabel = "HOST:PORT")
-    public String bootstrapServers;
+    static class MainCmdGroup {
+        @CommandLine.Option(
+                names = {"-c", "--configDir"},
+                scope = CommandLine.ScopeType.INHERIT,
+                paramLabel = "configuration directory",
+                description = "Directory containing server.yaml configuration file.")
+        public String configDir;
+
+        @CommandLine.Option(
+                names = {"-b", "--bootstrap-servers"},
+                scope = CommandLine.ScopeType.INHERIT,
+                description = "Cluster connection endpoints (format: host1:port1,host2:port2)",
+                paramLabel = "HOST:PORT")
+        public String bootstrapServers;
+    }
 
     private final Supplier<Admin> adminSupplier;
 
@@ -68,6 +73,46 @@ public class FlussCliMain extends BaseCmd<Integer> {
     public FlussCliMain() {
         this.adminSupplier = this::getAdmin;
         initializeGroupCmd();
+    }
+
+    /** CLI entry point with proper exit code handling. */
+    public static void main(String[] args) {
+        try {
+            CommandLine cmd = new CommandLine(new FlussCliMain());
+            SUB_GROUP_CMD.forEach(cmd::addSubcommand);
+            System.exit(cmd.execute(args));
+        } catch (CommandLine.ParameterException ex) {
+            ex.getCommandLine().usage(System.err);
+            System.exit(2); // Invalid parameter exit code
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+            logger.error("Critical execution failure: {}", ex.getMessage());
+            System.exit(1); // General error exit code
+        }
+    }
+
+    public Admin getAdmin() {
+        try (Connection connection = ConnectionManager.getConnection(getBootstrapServers())) {
+            return connection.getAdmin();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to connect to server", e);
+        }
+    }
+
+    @Override
+    protected void validateParams() {
+        validateBootstrapServers();
+    }
+
+    @Override
+    protected int callCmd() throws Exception {
+        CommandLine.usage(this, System.out);
+        return 0;
+    }
+
+    /** Private method. */
+    private String getBootstrapServers() {
+        return group.bootstrapServers;
     }
 
     private void initializeGroupCmd() {
@@ -87,21 +132,13 @@ public class FlussCliMain extends BaseCmd<Integer> {
                         });
     }
 
-    /** Validates configuration directory existence. */
-    protected void checkConfigPath(String path) {
-        if (!Files.exists(Paths.get(path))) {
-            throw new CommandLine.ParameterException(
-                    new CommandLine(this), "Config file not found: " + path);
-        }
-    }
-
     /**
      * Validates bootstrap server format.
      *
      * @param servers List of server addresses to validate
      * @throws CommandLine.ParameterException if any server has invalid format
      */
-    public void checkBootstrapServers(List<String> servers) {
+    private void checkBootstrapServers(List<String> servers) {
         if (servers == null || servers.isEmpty()) {
             throw new CommandLine.ParameterException(
                     new CommandLine(this),
@@ -148,64 +185,15 @@ public class FlussCliMain extends BaseCmd<Integer> {
         return coordinatorHost + ":" + coordinatorPort;
     }
 
-    public void validateConfiguration() {
-        validateConfigurationSources();
-        validateBootstrapServers();
-    }
-
-    private void validateConfigurationSources() {
-        if (configDir == null && (bootstrapServers == null || bootstrapServers.isEmpty())) {
-            throw new CommandLine.ParameterException(
-                    new CommandLine(this), "Required: --configDir or --bootstrap-servers");
-        }
-    }
-
     private void validateBootstrapServers() {
-        if (configDir != null) {
-            checkConfigPath(configDir);
-            Configuration config = GlobalConfiguration.loadConfiguration(configDir, null);
-            this.bootstrapServers = getBootStrapServers(config);
+        if (group.configDir != null) {
+            if (!Files.exists(Paths.get(group.configDir))) {
+                throw new CommandLine.ParameterException(
+                        new CommandLine(this), "Config file not found: " + group.configDir);
+            }
+            Configuration config = GlobalConfiguration.loadConfiguration(group.configDir, null);
+            this.group.bootstrapServers = getBootStrapServers(config);
         }
-        checkBootstrapServers(Arrays.asList(this.bootstrapServers.split(",")));
-    }
-
-    public String getBootstrapServers() {
-        return bootstrapServers;
-    }
-
-    /**
-     * Main command execution logic.
-     *
-     * @return CLI exit code
-     */
-    @Override
-    public Integer call() {
-        validateConfiguration();
-        CommandLine.usage(this, System.out);
-        return 0;
-    }
-
-    public Admin getAdmin() {
-        try (Connection connection = ConnectionManager.getConnection(getBootstrapServers())) {
-            return connection.getAdmin();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to connect to server", e);
-        }
-    }
-
-    /** CLI entry point with proper exit code handling. */
-    public static void main(String[] args) {
-        try {
-            CommandLine cmd = new CommandLine(new FlussCliMain());
-            SUB_GROUP_CMD.forEach(cmd::addSubcommand);
-            System.exit(cmd.execute(args));
-        } catch (CommandLine.ParameterException ex) {
-            ex.getCommandLine().usage(System.err);
-            System.exit(2); // Invalid parameter exit code
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            logger.error("Critical execution failure: {}", ex.getMessage());
-            System.exit(1); // General error exit code
-        }
+        checkBootstrapServers(Arrays.asList(this.group.bootstrapServers.split(",")));
     }
 }

@@ -18,8 +18,6 @@ package com.alibaba.fluss.cli.base;
 
 import com.alibaba.fluss.client.admin.Admin;
 
-import picocli.CommandLine;
-
 import java.util.function.Supplier;
 
 public abstract class AdminBaseCmd extends BaseCmd<Integer> {
@@ -34,9 +32,15 @@ public abstract class AdminBaseCmd extends BaseCmd<Integer> {
         this.adminSupplier = adminSupplier;
     }
 
+    /** Validate params. */
+    protected abstract void validateParams();
+
+    /** Cmd logics. */
+    protected abstract int callCmd() throws Exception;
+
     @Override
     public Integer call() throws Exception {
-        CommandLine.usage(this, System.out);
-        return 0;
+        validateParams();
+        return callCmd();
     }
 }
