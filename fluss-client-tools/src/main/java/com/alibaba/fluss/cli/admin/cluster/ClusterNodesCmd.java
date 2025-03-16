@@ -31,7 +31,10 @@ public class ClusterNodesCmd extends AdminBaseCmd {
     private String outputFormat;
 
     @Override
-    public Integer call() throws Exception {
+    protected void validateParams() {}
+
+    @Override
+    protected int callCmd() throws Exception {
         getAdmin()
                 .getServerNodes()
                 .thenAccept(

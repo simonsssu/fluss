@@ -33,7 +33,10 @@ public class DropDatabaseCmd extends AdminBaseCmd {
     private boolean ignoreMissing;
 
     @Override
-    public Integer call() throws Exception {
+    protected void validateParams() {}
+
+    @Override
+    protected int callCmd() throws Exception {
         getAdmin()
                 .dropDatabase(dbName, ignoreMissing, cascade)
                 .thenAccept(v -> System.out.println("Database dropped: " + dbName))
