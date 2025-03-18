@@ -19,5 +19,7 @@ package com.alibaba.fluss.cli.base;
 public interface IBaseCmd {
     default void setArgs(String[] args) {}
 
+    default void setBootStrapServers(String bootstrapServers) {}
+
     int execute();
 }
