@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.admin.cluster;
+package com.alibaba.fluss.cli.base;
 
-import com.alibaba.fluss.cli.base.GroupBaseCmd;
+public interface GroupCmd {
+    void setArgs(String[] args);
 
-import picocli.CommandLine;
-
-@CommandLine.Command(
-        name = "cluster",
-        description = "Cluster operations",
-        subcommands = {ClusterNodesCmd.class, CommandLine.HelpCommand.class})
-public class ClusterCmdGroup extends GroupBaseCmd {}
+    int execute();
+}

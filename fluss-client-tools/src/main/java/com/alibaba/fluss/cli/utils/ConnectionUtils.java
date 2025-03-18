@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.conn;
+package com.alibaba.fluss.cli.utils;
 
 import com.alibaba.fluss.client.Connection;
 import com.alibaba.fluss.client.ConnectionFactory;
@@ -25,7 +25,7 @@ import com.alibaba.fluss.utils.MapUtils;
 
 import java.util.Map;
 
-public class ConnectionManager implements AutoCloseable {
+public class ConnectionUtils implements AutoCloseable {
     private static final Map<String, Connection> connections = MapUtils.newConcurrentHashMap();
 
     public static Connection getConnection(String bootstrapServers) {

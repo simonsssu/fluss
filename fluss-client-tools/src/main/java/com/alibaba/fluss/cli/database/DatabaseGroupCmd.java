@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.admin.database;
+package com.alibaba.fluss.cli.database;
 
-import com.alibaba.fluss.cli.base.GroupBaseCmd;
+import com.alibaba.fluss.cli.annotation.FlussCmdGroup;
+import com.alibaba.fluss.cli.base.GroupCmd;
 
-import picocli.CommandLine;
+import com.beust.jcommander.Parameters;
 
-@CommandLine.Command(
-        name = "database",
-        description = "Database operations",
-        subcommands = {
-            CreateDatabaseCmd.class,
-            ListDatabaseCmd.class,
-            DropDatabaseCmd.class,
-            DescribeDatabaseCmd.class,
-            CommandLine.HelpCommand.class
-        })
-public class DatabaseCmdGroup extends GroupBaseCmd {}
+// Database Command Group
+@FlussCmdGroup(name = "database", description = "Database management commands")
+@Parameters(commandDescription = "Database management operations")
+public class DatabaseGroupCmd implements GroupCmd {
+    private String[] args;
+
+    public DatabaseGroupCmd() {}
+
+    public void setArgs(String[] args) {
+        this.args = args;
+    }
+
+    @Override
+    public int execute() {
+        return 1;
+    }
+}
