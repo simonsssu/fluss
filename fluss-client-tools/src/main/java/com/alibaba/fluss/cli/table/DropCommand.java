@@ -16,18 +16,22 @@
 
 package com.alibaba.fluss.cli.table;
 
+import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.base.BaseCliCmd;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+@FlussCmd(name = "drop", parentCmd = TableGroupCmd.class)
 @Parameters(commandDescription = "Drop a table")
-public class DropCommand {
+public class DropCommand extends BaseCliCmd {
     @Parameter(description = "<table-path>", required = true)
     private String tablePath;
 
     @Parameter(names = "--force", description = "Skip confirmation")
     private boolean force;
 
-    public int run() {
+    @Override
+    public int execute() {
         System.out.printf("Dropping table %s (force: %b)\n", tablePath, force);
         return 0;
     }

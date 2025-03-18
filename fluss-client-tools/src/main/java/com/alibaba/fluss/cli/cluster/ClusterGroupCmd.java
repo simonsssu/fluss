@@ -16,25 +16,11 @@
 
 package com.alibaba.fluss.cli.cluster;
 
-import com.alibaba.fluss.cli.annotation.FlussCmdGroup;
-import com.alibaba.fluss.cli.base.GroupCmd;
-
+import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.base.BaseGroupCmd;
 import com.beust.jcommander.Parameters;
 
 // Cluster Command Group
-@FlussCmdGroup(name = "cluster", description = "Cluster management commands")
+@FlussCmd(name = "cluster", isGroup = true, description = "Cluster management commands")
 @Parameters(commandDescription = "Cluster management operations")
-public class ClusterGroupCmd implements GroupCmd {
-    private String[] args;
-
-    public ClusterGroupCmd() {}
-
-    public void setArgs(String[] args) {
-        this.args = args;
-    }
-
-    @Override
-    public int execute() {
-        return 1;
-    }
-}
+public class ClusterGroupCmd extends BaseGroupCmd {}
