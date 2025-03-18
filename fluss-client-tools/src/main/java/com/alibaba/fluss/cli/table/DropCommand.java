@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.admin.table;
+package com.alibaba.fluss.cli.table;
 
-import com.alibaba.fluss.cli.base.GroupBaseCmd;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 
-import picocli.CommandLine;
+@Parameters(commandDescription = "Drop a table")
+public class DropCommand {
+    @Parameter(description = "<table-path>", required = true)
+    private String tablePath;
 
-@CommandLine.Command(
-        name = "table",
-        description = "Table operations",
-        subcommands = {
-            CreateTableCmd.class,
-            DescribeTableCmd.class,
-            DropTableCmd.class,
-            ListTableCmd.class
-        })
-public class TableCmdGroup extends GroupBaseCmd {}
+    @Parameter(names = "--force", description = "Skip confirmation")
+    private boolean force;
+
+    public int run() {
+        System.out.printf("Dropping table %s (force: %b)\n", tablePath, force);
+        return 0;
+    }
+}

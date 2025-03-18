@@ -16,147 +16,131 @@
 
 package com.alibaba.fluss.cli;
 
-import com.alibaba.fluss.cli.base.AdminBaseCmd;
-import com.alibaba.fluss.cli.base.GroupBaseCmd;
-import com.alibaba.fluss.cli.conn.ConnectionManager;
-import com.alibaba.fluss.client.Connection;
-import com.alibaba.fluss.client.admin.Admin;
+import com.alibaba.fluss.cli.annotation.FlussCmdGroup;
+import com.alibaba.fluss.cli.cluster.ClusterGroupCmd;
+import com.alibaba.fluss.cli.database.DatabaseGroupCmd;
+import com.alibaba.fluss.cli.table.TableGroupCmd;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-import com.alibaba.fluss.shaded.guava32.com.google.common.collect.Lists;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.Parameters;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
-import picocli.CommandLine.ArgGroup;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.Set;
 
-@CommandLine.Command(
-        name = "fluss",
-        mixinStandardHelpOptions = true,
-        version = "0.6.0",
-        description = "Fluss Command Line Interface")
-public class FlussCliMain extends AdminBaseCmd {
+@Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
+public class FlussCliMain {
     private static final Logger logger = LoggerFactory.getLogger(FlussCliMain.class);
 
-    @ArgGroup(exclusive = false, multiplicity = "1..*")
-    private MainCmdGroup group;
+    // Global Parameters
+    @Parameter(
+            names = {"--bootstrap-server", "-b"},
+            description = "Cluster bootstrap servers (comma-separated)")
+    private String bootstrapServers;
 
-    static class MainCmdGroup {
-        @CommandLine.Option(
-                names = {"-c", "--configDir"},
-                scope = CommandLine.ScopeType.INHERIT,
-                paramLabel = "configuration directory",
-                description = "Directory containing server.yaml configuration file.")
-        public String configDir;
+    @Parameter(
+            names = {"--config", "-c"},
+            description = "Path to configuration file")
+    private String configFile;
 
-        @CommandLine.Option(
-                names = {"-b", "--bootstrap-servers"},
-                scope = CommandLine.ScopeType.INHERIT,
-                description = "Cluster connection endpoints (format: host1:port1,host2:port2)",
-                paramLabel = "HOST:PORT")
-        public String bootstrapServers;
+    @Parameter(
+            names = {"--version", "-v"},
+            description = "Show version info",
+            help = true)
+    private boolean version;
+
+    @Parameter(
+            names = {"--help", "-h"},
+            description = "Show usage help",
+            help = true)
+    private boolean help;
+
+    private final JCommander jc;
+
+    private static final List<String> keywords = new ArrayList<>();
+
+    public static void main(String[] args) {
+        FlussCliMain cli = new FlussCliMain();
+        int exitCode = cli.run(args);
+        System.exit(exitCode);
     }
-
-    private final Supplier<Admin> adminSupplier;
-
-    private static final List<GroupBaseCmd> SUB_GROUP_CMD = Lists.newArrayList();
 
     public FlussCliMain() {
-        this.adminSupplier = this::getAdmin;
-        initializeGroupCmd();
+        jc = new JCommander(this);
+        jc.setProgramName("fluss");
+
+        // Register commands
+        autoRegisterCommands();
     }
 
-    /** CLI entry point with proper exit code handling. */
-    public static void main(String[] args) {
+    private void autoRegisterCommands() {
         try {
-            CommandLine cmd = new CommandLine(new FlussCliMain());
-            SUB_GROUP_CMD.forEach(cmd::addSubcommand);
-            System.exit(cmd.execute(args));
-        } catch (CommandLine.ParameterException ex) {
-            ex.getCommandLine().usage(System.err);
-            System.exit(2); // Invalid parameter exit code
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-            logger.error("Critical execution failure: {}", ex.getMessage());
-            System.exit(1); // General error exit code
-        }
-    }
+            Reflections reflections = new Reflections("com.alibaba.fluss.cli");
+            Set<Class<?>> commands = reflections.getTypesAnnotatedWith(FlussCmdGroup.class);
 
-    public Admin getAdmin() {
-        try (Connection connection = ConnectionManager.getConnection(getBootstrapServers())) {
-            return connection.getAdmin();
+            for (Class<?> clazz : commands) {
+                FlussCmdGroup annotation = clazz.getAnnotation(FlussCmdGroup.class);
+                keywords.add(annotation.name());
+                Object commandInstance = clazz.getDeclaredConstructor().newInstance();
+                jc.addCommand(annotation.name(), commandInstance);
+            }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to connect to server", e);
+            throw new RuntimeException("Failed to auto-register commands", e);
         }
     }
 
-    @Override
-    protected void validateParams() {
-        validateBootstrapServers();
+    private void loadConfig() {
+        if (configFile != null) {
+            if (!Files.exists(Paths.get(configFile))) {
+                throw new ParameterException("Config file not found: " + configFile);
+            }
+            Configuration config = GlobalConfiguration.loadConfiguration(configFile, null);
+            bootstrapServers = getBootStrapServers(config);
+        }
     }
 
-    @Override
-    protected int callCmd() throws Exception {
-        CommandLine.usage(this, System.out);
-        return 0;
-    }
-
-    /** Private method. */
-    private String getBootstrapServers() {
-        return group.bootstrapServers;
-    }
-
-    private void initializeGroupCmd() {
-        Reflections reflections = new Reflections("com.alibaba.fluss.cli");
-        reflections
-                .getSubTypesOf(GroupBaseCmd.class)
-                .forEach(
-                        clazz -> {
-                            try {
-                                GroupBaseCmd cmd = clazz.getDeclaredConstructor().newInstance();
-                                cmd.setAdminSupplier(adminSupplier);
-                                SUB_GROUP_CMD.add(cmd);
-                            } catch (Exception e) {
-                                logger.error(
-                                        "Failed to initialize group command: {}", clazz.getName());
-                            }
-                        });
+    private void validateConfig() {
+        if (bootstrapServers == null) {
+            throw new ParameterException(
+                    "Bootstrap servers required (format: host1:port1,host2:port2,....)");
+        }
+        checkBootstrapServers(Arrays.asList(bootstrapServers.split(",")));
     }
 
     /**
      * Validates bootstrap server format.
      *
      * @param servers List of server addresses to validate
-     * @throws CommandLine.ParameterException if any server has invalid format
+     * @throws ParameterException if any server has invalid format
      */
     private void checkBootstrapServers(List<String> servers) {
         if (servers == null || servers.isEmpty()) {
-            throw new CommandLine.ParameterException(
-                    new CommandLine(this),
+            throw new ParameterException(
                     "At least one bootstrap server required (format: host:port)");
         }
 
         servers.forEach(
                 server -> {
                     if (!server.contains(":")) {
-                        throw new CommandLine.ParameterException(
-                                new CommandLine(this),
+                        throw new ParameterException(
                                 "Missing port in server: "
                                         + server
                                         + " (required format: host:port)");
                     }
                     if (!server.matches("^\\S+:\\d{1,5}$")) {
-                        throw new CommandLine.ParameterException(
-                                new CommandLine(this),
+                        throw new ParameterException(
                                 "Invalid server format: " + server + " (expected host:port)");
                     }
                 });
@@ -185,15 +169,92 @@ public class FlussCliMain extends AdminBaseCmd {
         return coordinatorHost + ":" + coordinatorPort;
     }
 
-    private void validateBootstrapServers() {
-        if (group.configDir != null) {
-            if (!Files.exists(Paths.get(group.configDir))) {
-                throw new CommandLine.ParameterException(
-                        new CommandLine(this), "Config file not found: " + group.configDir);
+    public int run(String[] args) {
+        try {
+            List<String[]> splitArgs = splitByKeywords(args);
+            jc.parse(splitArgs.get(0));
+
+            if (version) {
+                printVersion();
+                return 0;
             }
-            Configuration config = GlobalConfiguration.loadConfiguration(group.configDir, null);
-            this.group.bootstrapServers = getBootStrapServers(config);
+
+            if (help || jc.getParsedCommand() == null) {
+                printUsage();
+                return 0;
+            }
+
+            loadConfig();
+            validateConfig();
+
+            return dispatchCommand(splitArgs.get(1));
+
+        } catch (ParameterException e) {
+            System.err.println("Error: " + e.getMessage());
+            logger.error("Parameter error: {}", e.getMessage(), e);
+            printCommandUsage();
+            return 1;
         }
-        checkBootstrapServers(Arrays.asList(this.group.bootstrapServers.split(",")));
+    }
+
+    private static List<String[]> splitByKeywords(String[] args) {
+        int splitIndex = -1;
+
+        for (int i = 0; i < args.length; i++) {
+            if (keywords.contains(args[i])) {
+                splitIndex = i;
+                break;
+            }
+        }
+
+        if (splitIndex == -1) {
+            return Arrays.asList(args.clone(), new String[0]);
+        }
+
+        String[] mainArgs = Arrays.copyOfRange(args, 0, splitIndex + 1);
+        String[] subArgs = Arrays.copyOfRange(args, splitIndex + 1, args.length);
+
+        return Arrays.asList(mainArgs, subArgs);
+    }
+
+    private int dispatchCommand(String[] subArgs) {
+        String command = jc.getParsedCommand();
+        switch (command) {
+            case "table":
+                TableGroupCmd tableCmd = new TableGroupCmd();
+                tableCmd.setArgs(subArgs);
+                return tableCmd.execute();
+            case "cluster":
+                ClusterGroupCmd clusterCmd = new ClusterGroupCmd();
+                clusterCmd.setArgs(subArgs);
+                return clusterCmd.execute();
+            case "database":
+                DatabaseGroupCmd databaseCmd = new DatabaseGroupCmd();
+                databaseCmd.setArgs(subArgs);
+                return databaseCmd.execute();
+            default:
+                printUsage();
+                return 1;
+        }
+    }
+
+    private void printVersion() {
+        System.out.println("Fluss CLI: v0.1.0\nRuntime Version: Fluss Core 0.7.0\n");
+    }
+
+    private void printUsage() {
+        jc.usage();
+    }
+
+    private void printCommandUsage() {
+        String command = jc.getParsedCommand();
+        if (command != null) {
+            JCommander subCommander = jc.getCommands().get(command);
+            if (subCommander != null) {
+                subCommander.usage();
+            }
+        } else {
+            printUsage();
+        }
     }
 }
