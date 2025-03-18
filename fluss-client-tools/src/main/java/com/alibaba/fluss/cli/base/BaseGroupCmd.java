@@ -18,12 +18,16 @@ package com.alibaba.fluss.cli.base;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.shaded.guava32.com.google.common.collect.Maps;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import java.util.Map;
-import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 public abstract class BaseGroupCmd implements IBaseCmd {
 
@@ -37,9 +41,16 @@ public abstract class BaseGroupCmd implements IBaseCmd {
 
     protected String[] args;
 
+    protected String bootstrapServers;
+
     @Override
     public void setArgs(String[] args) {
         this.args = args;
+    }
+
+    @Override
+    public void setBootStrapServers(String bootstrapServers) {
+        this.bootstrapServers = bootstrapServers;
     }
 
     @Override
@@ -62,7 +73,9 @@ public abstract class BaseGroupCmd implements IBaseCmd {
 
     public void initSubCommand() {
         Reflections reflections = new Reflections("com.alibaba.fluss.cli");
-        Set<Class<?>> commands = reflections.getTypesAnnotatedWith(FlussCmd.class);
+        List<Class<?>> commands =
+                new ArrayList<>(reflections.getTypesAnnotatedWith(FlussCmd.class));
+        commands.sort(Comparator.comparing(Class::getName));
         commands.stream()
                 .filter(
                         cmd ->
@@ -81,6 +94,10 @@ public abstract class BaseGroupCmd implements IBaseCmd {
                                 throw new RuntimeException(e);
                             }
                         });
+    }
+
+    public String getBootstrapServers() {
+        return bootstrapServers;
     }
 
     public BaseCliCmd getCmd(String cmdName) {

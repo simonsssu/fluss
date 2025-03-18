@@ -18,6 +18,7 @@ package com.alibaba.fluss.cli.table;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseGroupCmd;
+
 import com.beust.jcommander.Parameters;
 
 // Table Command Group
