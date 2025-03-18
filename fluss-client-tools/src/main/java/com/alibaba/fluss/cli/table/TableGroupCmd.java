@@ -16,60 +16,11 @@
 
 package com.alibaba.fluss.cli.table;
 
-import com.alibaba.fluss.cli.annotation.FlussCmdGroup;
-import com.alibaba.fluss.cli.base.GroupCmd;
-
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.ParameterException;
+import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.base.BaseGroupCmd;
 import com.beust.jcommander.Parameters;
 
 // Table Command Group
-@FlussCmdGroup(name = "table", description = "Table management commands")
+@FlussCmd(name = "table", isGroup = true, description = "Table management commands")
 @Parameters(commandDescription = "Table management operations")
-public class TableGroupCmd implements GroupCmd {
-    private JCommander cmdJc;
-    private String[] args;
-
-    public TableGroupCmd() {
-        cmdJc = new JCommander(this);
-        cmdJc.setProgramName("table");
-        cmdJc.addCommand("list", new ListCommand());
-        cmdJc.addCommand("create", new CreateCommand());
-        cmdJc.addCommand("drop", new DropCommand());
-    }
-
-    public void setArgs(String[] args) {
-        this.args = args;
-    }
-
-    @Override
-    public int execute() {
-        try {
-            cmdJc.parse(args);
-            return dispatchSubCommand();
-        } catch (ParameterException e) {
-            System.err.println("Table Error: " + e.getMessage());
-            cmdJc.usage();
-            return 1;
-        }
-    }
-
-    private int dispatchSubCommand() {
-        if (cmdJc.getParsedCommand() == null) {
-            System.err.println("Table Error: No command specified!");
-            cmdJc.usage();
-            return 1;
-        }
-
-        switch (cmdJc.getParsedCommand()) {
-            case "list":
-                return new ListCommand().run();
-            case "create":
-                return new CreateCommand().run();
-            case "drop":
-                return new DropCommand().run();
-            default:
-                return 1;
-        }
-    }
-}
+public class TableGroupCmd extends BaseGroupCmd {}

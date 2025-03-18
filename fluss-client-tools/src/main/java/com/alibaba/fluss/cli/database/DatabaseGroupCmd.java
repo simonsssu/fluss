@@ -16,23 +16,13 @@
 
 package com.alibaba.fluss.cli.database;
 
-import com.alibaba.fluss.cli.annotation.FlussCmdGroup;
-import com.alibaba.fluss.cli.base.GroupCmd;
-
+import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.base.BaseGroupCmd;
 import com.beust.jcommander.Parameters;
 
-// Database Command Group
-@FlussCmdGroup(name = "database", description = "Database management commands")
+@FlussCmd(name = "database", isGroup = true, description = "Database management commands")
 @Parameters(commandDescription = "Database management operations")
-public class DatabaseGroupCmd implements GroupCmd {
-    private String[] args;
-
-    public DatabaseGroupCmd() {}
-
-    public void setArgs(String[] args) {
-        this.args = args;
-    }
-
+public class DatabaseGroupCmd extends BaseGroupCmd {
     @Override
     public int execute() {
         return 1;
