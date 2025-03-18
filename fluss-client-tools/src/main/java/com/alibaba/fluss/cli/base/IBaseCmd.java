@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.annotation;
+package com.alibaba.fluss.cli.base;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public interface IBaseCmd {
+    default void setArgs(String[] args) {}
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface FlussCmdGroup {
-    String name();
-
-    String description() default "";
+    int execute();
 }

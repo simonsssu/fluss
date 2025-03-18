@@ -16,11 +16,14 @@
 
 package com.alibaba.fluss.cli.table;
 
+import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.base.BaseCliCmd;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+@FlussCmd(name = "create", parentCmd = TableGroupCmd.class)
 @Parameters(commandDescription = "Create a new table")
-public class CreateCommand {
+public class CreateCommand extends BaseCliCmd {
     @Parameter(description = "<table-path>", required = true)
     private String tablePath;
 
@@ -30,7 +33,8 @@ public class CreateCommand {
     @Parameter(names = "--shards", description = "Number of shards")
     private int shards = 1;
 
-    public int run() {
+    @Override
+    public int execute() {
         System.out.printf("Creating table %s with %d shards\n", tablePath, shards);
         if (schemaFile != null) {
             System.out.println("Using schema: " + schemaFile);

@@ -16,11 +16,14 @@
 
 package com.alibaba.fluss.cli.table;
 
+import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.base.BaseCliCmd;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+@FlussCmd(name = "list", parentCmd = TableGroupCmd.class)
 @Parameters(commandDescription = "List tables in a database")
-public class ListCommand {
+public class ListCommand extends BaseCliCmd {
     @Parameter(
             names = {"--db", "-d"},
             description = "Database name",
@@ -30,9 +33,9 @@ public class ListCommand {
     @Parameter(names = "--format", description = "Output format (text/json)")
     private String format = "text";
 
-    public int run() {
+    @Override
+    public int execute() {
         System.out.printf("Listing tables in %s (format: %s)\n", database, format);
-        // Implementation here
         return 0;
     }
 }

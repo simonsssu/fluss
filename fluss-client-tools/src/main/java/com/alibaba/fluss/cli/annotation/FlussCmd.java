@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-package com.alibaba.fluss.cli.base;
+package com.alibaba.fluss.cli.annotation;
 
-public interface GroupCmd {
-    void setArgs(String[] args);
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    int execute();
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface FlussCmd {
+
+    String name();
+
+    Class<?> parentCmd() default Void.class;
+
+    String description() default "";
+
+    boolean isGroup() default false;
 }

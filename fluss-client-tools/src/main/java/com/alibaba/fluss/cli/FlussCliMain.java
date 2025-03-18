@@ -16,22 +16,16 @@
 
 package com.alibaba.fluss.cli;
 
-import com.alibaba.fluss.cli.annotation.FlussCmdGroup;
-import com.alibaba.fluss.cli.cluster.ClusterGroupCmd;
-import com.alibaba.fluss.cli.database.DatabaseGroupCmd;
-import com.alibaba.fluss.cli.table.TableGroupCmd;
+import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.base.BaseGroupCmd;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.beust.jcommander.internal.Maps;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -39,6 +33,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
@@ -71,6 +68,8 @@ public class FlussCliMain {
 
     private static final List<String> keywords = new ArrayList<>();
 
+    private static final Map<String, BaseGroupCmd> GROUP_CMD = Maps.newHashMap();
+
     public static void main(String[] args) {
         FlussCliMain cli = new FlussCliMain();
         int exitCode = cli.run(args);
@@ -86,19 +85,24 @@ public class FlussCliMain {
     }
 
     private void autoRegisterCommands() {
-        try {
-            Reflections reflections = new Reflections("com.alibaba.fluss.cli");
-            Set<Class<?>> commands = reflections.getTypesAnnotatedWith(FlussCmdGroup.class);
-
-            for (Class<?> clazz : commands) {
-                FlussCmdGroup annotation = clazz.getAnnotation(FlussCmdGroup.class);
-                keywords.add(annotation.name());
-                Object commandInstance = clazz.getDeclaredConstructor().newInstance();
-                jc.addCommand(annotation.name(), commandInstance);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to auto-register commands", e);
-        }
+        Reflections reflections = new Reflections("com.alibaba.fluss.cli");
+        Set<Class<?>> commands = reflections.getTypesAnnotatedWith(FlussCmd.class);
+        commands.forEach(
+                c -> {
+                    FlussCmd flussAnnotation = c.getAnnotation(FlussCmd.class);
+                    keywords.add(flussAnnotation.name());
+                    try {
+                        if (flussAnnotation.isGroup()) {
+                            BaseGroupCmd commandInstance =
+                                    (BaseGroupCmd) c.getDeclaredConstructor().newInstance();
+                            commandInstance.initSubCommand();
+                            GROUP_CMD.put(flussAnnotation.name(), commandInstance);
+                            jc.addCommand(flussAnnotation.name(), commandInstance);
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to auto-register commands", e);
+                    }
+                });
     }
 
     private void loadConfig() {
@@ -219,23 +223,9 @@ public class FlussCliMain {
 
     private int dispatchCommand(String[] subArgs) {
         String command = jc.getParsedCommand();
-        switch (command) {
-            case "table":
-                TableGroupCmd tableCmd = new TableGroupCmd();
-                tableCmd.setArgs(subArgs);
-                return tableCmd.execute();
-            case "cluster":
-                ClusterGroupCmd clusterCmd = new ClusterGroupCmd();
-                clusterCmd.setArgs(subArgs);
-                return clusterCmd.execute();
-            case "database":
-                DatabaseGroupCmd databaseCmd = new DatabaseGroupCmd();
-                databaseCmd.setArgs(subArgs);
-                return databaseCmd.execute();
-            default:
-                printUsage();
-                return 1;
-        }
+        BaseGroupCmd baseGroupCmd = GROUP_CMD.get(command);
+        baseGroupCmd.setArgs(subArgs);
+        return baseGroupCmd.execute();
     }
 
     private void printVersion() {
