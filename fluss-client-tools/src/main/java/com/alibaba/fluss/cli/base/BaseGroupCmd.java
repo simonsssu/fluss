@@ -29,28 +29,21 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-public abstract class BaseGroupCmd implements IBaseCmd {
+public abstract class BaseGroupCmd extends BaseCmd {
 
     private static final Map<String, BaseCliCmd> CMD_MAP = Maps.newHashMap();
 
     protected JCommander cmdJc;
 
-    public BaseGroupCmd() {
-        this.cmdJc = new JCommander(this);
-    }
-
     protected String[] args;
 
-    protected String bootstrapServers;
+    public BaseGroupCmd(JCommander cmdJc) {
+        this.cmdJc = cmdJc;
+    }
 
     @Override
     public void setArgs(String[] args) {
         this.args = args;
-    }
-
-    @Override
-    public void setBootStrapServers(String bootstrapServers) {
-        this.bootstrapServers = bootstrapServers;
     }
 
     @Override
@@ -86,6 +79,7 @@ public abstract class BaseGroupCmd implements IBaseCmd {
                             try {
                                 BaseCliCmd commandInstance =
                                         (BaseCliCmd) cmd.getDeclaredConstructor().newInstance();
+                                commandInstance.setAdminSupplier(adminSupplier);
                                 cmdJc.addCommand(getCmdName(cmd), commandInstance);
                                 CMD_MAP.put(getCmdName(cmd), commandInstance);
                             } catch (Exception e) {
@@ -94,10 +88,6 @@ public abstract class BaseGroupCmd implements IBaseCmd {
                                 throw new RuntimeException(e);
                             }
                         });
-    }
-
-    public String getBootstrapServers() {
-        return bootstrapServers;
     }
 
     public BaseCliCmd getCmd(String cmdName) {

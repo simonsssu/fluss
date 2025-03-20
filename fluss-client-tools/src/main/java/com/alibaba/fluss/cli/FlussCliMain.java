@@ -18,6 +18,8 @@ package com.alibaba.fluss.cli;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseGroupCmd;
+import com.alibaba.fluss.cli.utils.ConnectionUtils;
+import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
@@ -38,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 @Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
@@ -68,6 +71,8 @@ public class FlussCliMain {
 
     private final JCommander jc;
 
+    private Supplier<Admin> adminSupplier = () -> ConnectionUtils.getAdmin(bootstrapServers);
+
     private static final List<String> keywords = new ArrayList<>();
 
     private static final Map<String, BaseGroupCmd> GROUP_CMD = Maps.newHashMap();
@@ -96,10 +101,12 @@ public class FlussCliMain {
                     try {
                         if (flussAnnotation.isGroup()) {
                             BaseGroupCmd commandInstance =
-                                    (BaseGroupCmd) c.getDeclaredConstructor().newInstance();
+                                    (BaseGroupCmd)
+                                            c.getDeclaredConstructor(JCommander.class)
+                                                    .newInstance(jc);
+                            jc.addCommand(flussAnnotation.name(), commandInstance);
                             commandInstance.initSubCommand();
                             GROUP_CMD.put(flussAnnotation.name(), commandInstance);
-                            jc.addCommand(flussAnnotation.name(), commandInstance);
                         }
                     } catch (Exception e) {
                         throw new RuntimeException("Failed to auto-register commands", e);
@@ -227,7 +234,7 @@ public class FlussCliMain {
         String command = jc.getParsedCommand();
         BaseGroupCmd baseGroupCmd = GROUP_CMD.get(command);
         baseGroupCmd.setArgs(subArgs);
-        baseGroupCmd.setBootStrapServers(bootstrapServers);
+        baseGroupCmd.setAdminSupplier(adminSupplier);
         return baseGroupCmd.execute();
     }
 
