@@ -36,6 +36,7 @@ public class ListCommand extends BaseCliCmd {
 
     @Override
     public int execute() {
+        getAdmin().listTables(database);
         System.out.printf("Listing tables in %s (format: %s)\n", database, format);
         return 0;
     }

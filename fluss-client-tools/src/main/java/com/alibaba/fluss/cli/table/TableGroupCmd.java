@@ -19,9 +19,14 @@ package com.alibaba.fluss.cli.table;
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseGroupCmd;
 
+import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameters;
 
 // Table Command Group
 @FlussCmd(name = "table", isGroup = true, description = "Table management commands")
 @Parameters(commandDescription = "Table management operations")
-public class TableGroupCmd extends BaseGroupCmd {}
+public class TableGroupCmd extends BaseGroupCmd {
+    public TableGroupCmd(JCommander cmdJc) {
+        super(cmdJc);
+    }
+}

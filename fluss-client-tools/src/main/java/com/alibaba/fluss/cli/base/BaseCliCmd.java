@@ -16,4 +16,4 @@
 
 package com.alibaba.fluss.cli.base;
 
-public abstract class BaseCliCmd implements IBaseCmd {}
+public abstract class BaseCliCmd extends BaseCmd {}
