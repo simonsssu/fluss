@@ -21,16 +21,11 @@ import com.alibaba.fluss.cli.base.BaseGroupCmd;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -38,6 +33,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
@@ -96,10 +94,12 @@ public class FlussCliMain {
                     try {
                         if (flussAnnotation.isGroup()) {
                             BaseGroupCmd commandInstance =
-                                    (BaseGroupCmd) c.getDeclaredConstructor().newInstance();
+                                    (BaseGroupCmd)
+                                            c.getDeclaredConstructor(JCommander.class)
+                                                    .newInstance(jc);
+                            jc.addCommand(flussAnnotation.name(), commandInstance);
                             commandInstance.initSubCommand();
                             GROUP_CMD.put(flussAnnotation.name(), commandInstance);
-                            jc.addCommand(flussAnnotation.name(), commandInstance);
                         }
                     } catch (Exception e) {
                         throw new RuntimeException("Failed to auto-register commands", e);

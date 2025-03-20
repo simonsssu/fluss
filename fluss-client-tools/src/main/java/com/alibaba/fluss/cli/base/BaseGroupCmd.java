@@ -18,16 +18,14 @@ package com.alibaba.fluss.cli.base;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.shaded.guava32.com.google.common.collect.Maps;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
 
 public abstract class BaseGroupCmd implements IBaseCmd {
 
@@ -35,8 +33,8 @@ public abstract class BaseGroupCmd implements IBaseCmd {
 
     protected JCommander cmdJc;
 
-    public BaseGroupCmd() {
-        this.cmdJc = new JCommander(this);
+    public BaseGroupCmd(JCommander cmdJc) {
+        this.cmdJc = cmdJc;
     }
 
     protected String[] args;
@@ -94,10 +92,6 @@ public abstract class BaseGroupCmd implements IBaseCmd {
                                 throw new RuntimeException(e);
                             }
                         });
-    }
-
-    public String getBootstrapServers() {
-        return bootstrapServers;
     }
 
     public BaseCliCmd getCmd(String cmdName) {

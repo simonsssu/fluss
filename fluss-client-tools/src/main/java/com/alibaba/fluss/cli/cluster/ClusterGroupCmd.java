@@ -18,10 +18,15 @@ package com.alibaba.fluss.cli.cluster;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseGroupCmd;
-
+import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameters;
 
 // Cluster Command Group
 @FlussCmd(name = "cluster", isGroup = true, description = "Cluster management commands")
 @Parameters(commandDescription = "Cluster management operations")
-public class ClusterGroupCmd extends BaseGroupCmd {}
+public class ClusterGroupCmd extends BaseGroupCmd {
+
+    public ClusterGroupCmd(JCommander cmdJc) {
+        super(cmdJc);
+    }
+}
