@@ -18,37 +18,32 @@ package com.alibaba.fluss.cli.base;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.shaded.guava32.com.google.common.collect.Maps;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
 
-public abstract class BaseGroupCmd implements IBaseCmd {
+public abstract class BaseGroupCmd extends BaseCmd {
 
     private static final Map<String, BaseCliCmd> CMD_MAP = Maps.newHashMap();
 
     protected JCommander cmdJc;
 
+    protected String[] args;
+
     public BaseGroupCmd(JCommander cmdJc) {
         this.cmdJc = cmdJc;
     }
 
-    protected String[] args;
-
-    protected String bootstrapServers;
-
     @Override
     public void setArgs(String[] args) {
         this.args = args;
-    }
-
-    @Override
-    public void setBootStrapServers(String bootstrapServers) {
-        this.bootstrapServers = bootstrapServers;
     }
 
     @Override
@@ -84,6 +79,7 @@ public abstract class BaseGroupCmd implements IBaseCmd {
                             try {
                                 BaseCliCmd commandInstance =
                                         (BaseCliCmd) cmd.getDeclaredConstructor().newInstance();
+                                commandInstance.setAdminSupplier(adminSupplier);
                                 cmdJc.addCommand(getCmdName(cmd), commandInstance);
                                 CMD_MAP.put(getCmdName(cmd), commandInstance);
                             } catch (Exception e) {

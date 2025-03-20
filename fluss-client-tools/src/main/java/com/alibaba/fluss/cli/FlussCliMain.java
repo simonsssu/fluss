@@ -18,14 +18,21 @@ package com.alibaba.fluss.cli;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseGroupCmd;
+import com.alibaba.fluss.cli.utils.ConnectionUtils;
+import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -33,9 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.function.Supplier;
 
 @Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
@@ -65,6 +70,8 @@ public class FlussCliMain {
     private boolean help;
 
     private final JCommander jc;
+
+    private Supplier<Admin> adminSupplier = () -> ConnectionUtils.getAdmin(bootstrapServers);
 
     private static final List<String> keywords = new ArrayList<>();
 
@@ -227,7 +234,7 @@ public class FlussCliMain {
         String command = jc.getParsedCommand();
         BaseGroupCmd baseGroupCmd = GROUP_CMD.get(command);
         baseGroupCmd.setArgs(subArgs);
-        baseGroupCmd.setBootStrapServers(bootstrapServers);
+        baseGroupCmd.setAdminSupplier(adminSupplier);
         return baseGroupCmd.execute();
     }
 

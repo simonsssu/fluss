@@ -38,7 +38,7 @@ public class ConnectionUtils implements AutoCloseable {
                 });
     }
 
-    public Admin getAdmin(String bootstrapServers) {
+    public static Admin getAdmin(String bootstrapServers) {
         return getConnection(bootstrapServers).getAdmin();
     }
 
