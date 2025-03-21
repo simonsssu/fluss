@@ -56,7 +56,13 @@ public abstract class BaseGroupCmd extends BaseCmd {
                 cmdJc.usage();
                 return 1;
             }
-            return getCmd(cmdJc.getParsedCommand()).execute();
+
+            BaseCliCmd cmd = getCmd(cmdJc.getParsedCommand());
+            if (cmd != null) {
+                return cmd.execute();
+            } else {
+                throw new ParameterException("Unknown command: " + cmdJc.getParsedCommand());
+            }
         } catch (ParameterException e) {
             System.err.println(StringUtils.capitalize(getCmdName()) + " Error: " + e.getMessage());
             cmdJc.usage();
