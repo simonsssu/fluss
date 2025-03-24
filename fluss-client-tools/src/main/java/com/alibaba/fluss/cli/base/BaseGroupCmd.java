@@ -17,29 +17,17 @@
 package com.alibaba.fluss.cli.base;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
-import com.alibaba.fluss.shaded.guava32.com.google.common.collect.Maps;
-
-import com.beust.jcommander.JCommander;
+import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
 
 public abstract class BaseGroupCmd extends BaseCmd {
 
-    private static final Map<String, BaseCliCmd> CMD_MAP = Maps.newHashMap();
-
-    protected JCommander cmdJc;
-
     protected String[] args;
-
-    public BaseGroupCmd(JCommander cmdJc) {
-        this.cmdJc = cmdJc;
-    }
 
     @Override
     public void setArgs(String[] args) {
@@ -52,12 +40,13 @@ public abstract class BaseGroupCmd extends BaseCmd {
             cmdJc.parse(args);
             if (cmdJc.getParsedCommand() == null) {
                 System.err.println(
-                        StringUtils.capitalize(getCmdName()) + " Error: No command specified!");
+                        StringUtils.capitalize(getCmdName())
+                                + " Command Error: No sub command specified!");
                 cmdJc.usage();
                 return 1;
             }
 
-            BaseCliCmd cmd = getCmd(cmdJc.getParsedCommand());
+            BaseCliCmd cmd = getCliCmd(cmdJc.getParsedCommand());
             if (cmd != null) {
                 return cmd.execute();
             } else {
@@ -65,7 +54,11 @@ public abstract class BaseGroupCmd extends BaseCmd {
             }
         } catch (ParameterException e) {
             System.err.println(StringUtils.capitalize(getCmdName()) + " Error: " + e.getMessage());
-            cmdJc.usage();
+            if (e instanceof MissingCommandException) {
+                cmdJc.usage();
+            } else {
+                getCliCmd(cmdJc.getParsedCommand()).printUsage();
+            }
             return 1;
         }
     }
@@ -86,8 +79,8 @@ public abstract class BaseGroupCmd extends BaseCmd {
                                 BaseCliCmd commandInstance =
                                         (BaseCliCmd) cmd.getDeclaredConstructor().newInstance();
                                 commandInstance.setAdminSupplier(adminSupplier);
+                                commandInstance.attachParentCmd(cmdJc);
                                 cmdJc.addCommand(getCmdName(cmd), commandInstance);
-                                CMD_MAP.put(getCmdName(cmd), commandInstance);
                             } catch (Exception e) {
                                 System.err.println(
                                         "Initialize sub command failed: " + e.getMessage());
@@ -96,19 +89,8 @@ public abstract class BaseGroupCmd extends BaseCmd {
                         });
     }
 
-    public BaseCliCmd getCmd(String cmdName) {
-        return CMD_MAP.get(cmdName);
-    }
-
-    private String getCmdName() {
-        return getCmdName(this.getClass());
-    }
-
-    private String getCmdName(Class<?> clazz) {
-        return clazz.getAnnotation(FlussCmd.class).name();
-    }
-
-    private String getParentCmdName(Class<?> clazz) {
-        return clazz.getAnnotation(FlussCmd.class).parentCmd().getName();
+    public BaseCliCmd getCliCmd(String cmdName) {
+        List<Object> subCmds = cmdJc.getCommands().get(cmdName).getObjects();
+        return (BaseCliCmd) subCmds.get(0);
     }
 }
