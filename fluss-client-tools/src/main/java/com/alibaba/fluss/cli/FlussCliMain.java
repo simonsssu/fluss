@@ -24,13 +24,18 @@ import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-import com.beust.jcommander.DefaultUsageFormatter;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.UnixStyleUsageFormatter;
 import com.beust.jcommander.internal.Lists;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -39,10 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
@@ -199,7 +200,7 @@ public class FlussCliMain {
             return dispatchCommand(splitArgs.get(1));
 
         } catch (ParameterException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Main Cli Error: " + e.getMessage());
             logger.error("Parameter error: {}", e.getMessage(), e);
             printCommandUsage();
             return 1;
@@ -241,13 +242,11 @@ public class FlussCliMain {
 
     private void printCommandUsage() {
         String command = jc.getParsedCommand();
-        jc.getOptions();
+        printMainOptionsUsage();
         if (command != null) {
             BaseGroupCmd groupCmd =
                     (BaseGroupCmd) jc.getCommands().get(command).getObjects().get(0);
             groupCmd.printUsage();
-        } else {
-            jc.usage();
         }
     }
 
@@ -256,7 +255,9 @@ public class FlussCliMain {
         pd.addAll(jc.getFields().values());
         pd.sort(jc.getParameterDescriptionComparator());
         StringBuilder out = new StringBuilder();
-        ((DefaultUsageFormatter) jc.getUsageFormatter())
-                .appendAllParametersDetails(out, StringUtils.EMPTY, pd);
+        out.append("fluss [options]\n");
+        ((UnixStyleUsageFormatter) jc.getUsageFormatter())
+                .appendAllParametersDetails(out, 6, "", pd);
+        System.out.println(out);
     }
 }
