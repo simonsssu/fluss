@@ -16,22 +16,25 @@
 
 package com.alibaba.fluss.cli.base;
 
-import com.alibaba.fluss.cli.annotation.FlussCmd;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.Parameters;
 import com.beust.jcommander.UnixStyleUsageFormatter;
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
 
 public abstract class BaseGroupCmd extends BaseCmd {
 
     protected String[] args;
+
+    @Override
+    protected boolean isGroup() {
+        return true;
+    }
 
     @Override
     public void setArgs(String[] args) {
@@ -68,28 +71,26 @@ public abstract class BaseGroupCmd extends BaseCmd {
     }
 
     public void initSubCommand() {
-        Reflections reflections = new Reflections("com.alibaba.fluss.cli");
+        Reflections reflections = new Reflections("com.alibaba.fluss.cli." + getCmdName());
         List<Class<?>> commands =
-                new ArrayList<>(reflections.getTypesAnnotatedWith(FlussCmd.class));
+                new ArrayList<>(reflections.getTypesAnnotatedWith(Parameters.class));
         commands.sort(Comparator.comparing(Class::getName));
         commands.stream()
-                .filter(
-                        cmd ->
-                                getParentCmdName(cmd).equals(this.getClass().getName())
-                                        && !cmd.getAnnotation(FlussCmd.class).isGroup())
+                .filter(clazz -> clazz.isAssignableFrom(BaseCliCmd.class))
                 .forEach(
-                        cmd -> {
+                        cmdClazz -> {
                             try {
                                 BaseCliCmd commandInstance =
-                                        (BaseCliCmd) cmd.getDeclaredConstructor().newInstance();
+                                        (BaseCliCmd)
+                                                cmdClazz.getDeclaredConstructor().newInstance();
                                 commandInstance.setAdminSupplier(adminSupplier);
                                 commandInstance.attachParentCmd(cmdJc);
-                                cmdJc.addCommand(getCmdName(cmd), commandInstance);
-                                JCommander jc = cmdJc.getCommands().get(getCmdName(cmd));
+                                cmdJc.addCommand(getCmdName(cmdClazz), commandInstance);
+                                JCommander jc = cmdJc.getCommands().get(getCmdName(cmdClazz));
                                 jc.setUsageFormatter(new UnixStyleUsageFormatter(jc));
                             } catch (Exception e) {
-                                System.err.println(
-                                        "Initialize sub command failed: " + e.getMessage());
+                                System.err.printf(
+                                        "Initialize sub command error: %s\n", e.getMessage());
                                 throw new RuntimeException(e);
                             }
                         });

@@ -16,14 +16,11 @@
 
 package com.alibaba.fluss.cli.cmd.table;
 
-import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseCliCmd;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
-@FlussCmd(name = "list", parentCmd = TableGroupCmd.class)
-@Parameters(commandDescription = "List tables in a database")
+@Parameters(commandNames = "list", commandDescription = "List tables in a database")
 public class ListCommand extends BaseCliCmd {
     @Parameter(
             names = {"--db", "-d"},

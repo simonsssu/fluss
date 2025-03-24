@@ -24,7 +24,6 @@ import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
@@ -32,10 +31,6 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.UnixStyleUsageFormatter;
 import com.beust.jcommander.internal.Lists;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -44,6 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
@@ -208,23 +207,16 @@ public class FlussCliMain {
     }
 
     private static List<String[]> splitByKeywords(String[] args) {
-        int splitIndex = -1;
-
-        for (int i = 0; i < args.length; i++) {
-            if (keywords.contains(args[i])) {
-                splitIndex = i;
-                break;
-            }
-        }
-
-        if (splitIndex == -1) {
-            return Arrays.asList(args.clone(), new String[0]);
-        }
-
-        String[] mainArgs = Arrays.copyOfRange(args, 0, splitIndex + 1);
-        String[] subArgs = Arrays.copyOfRange(args, splitIndex + 1, args.length);
-
-        return Arrays.asList(mainArgs, subArgs);
+        int splitIndex =
+                IntStream.range(0, args.length)
+                        .filter(i -> keywords.contains(args[i]))
+                        .findFirst()
+                        .orElse(-1);
+        return splitIndex == -1
+                ? Arrays.asList(args.clone(), new String[0])
+                : Arrays.asList(
+                        Arrays.copyOfRange(args, 0, splitIndex + 1),
+                        Arrays.copyOfRange(args, splitIndex + 1, args.length));
     }
 
     private int dispatchCommand(String[] subArgs) {

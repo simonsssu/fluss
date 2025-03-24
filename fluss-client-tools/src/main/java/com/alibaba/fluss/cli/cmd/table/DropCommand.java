@@ -16,14 +16,11 @@
 
 package com.alibaba.fluss.cli.cmd.table;
 
-import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseCliCmd;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
-@FlussCmd(name = "drop", parentCmd = TableGroupCmd.class)
-@Parameters(commandDescription = "Drop a table")
+@Parameters(commandNames = "drop", commandDescription = "Drop a table")
 public class DropCommand extends BaseCliCmd {
     @Parameter(description = "<table-path>", required = true)
     private String tablePath;

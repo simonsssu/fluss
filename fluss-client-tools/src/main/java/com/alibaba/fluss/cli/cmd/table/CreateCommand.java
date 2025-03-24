@@ -16,14 +16,11 @@
 
 package com.alibaba.fluss.cli.cmd.table;
 
-import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseCliCmd;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
-@FlussCmd(name = "create", parentCmd = TableGroupCmd.class)
-@Parameters(commandDescription = "Create a new table")
+@Parameters(commandNames = "create", commandDescription = "Create a new table")
 public class CreateCommand extends BaseCliCmd {
 
     @Parameter(description = "<table-path>", required = true)
