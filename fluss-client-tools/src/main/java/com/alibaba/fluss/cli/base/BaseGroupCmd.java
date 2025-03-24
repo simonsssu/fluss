@@ -17,13 +17,17 @@
 package com.alibaba.fluss.cli.base;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
+
+import com.beust.jcommander.JCommander;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.UnixStyleUsageFormatter;
+import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
 
 public abstract class BaseGroupCmd extends BaseCmd {
 
@@ -81,6 +85,8 @@ public abstract class BaseGroupCmd extends BaseCmd {
                                 commandInstance.setAdminSupplier(adminSupplier);
                                 commandInstance.attachParentCmd(cmdJc);
                                 cmdJc.addCommand(getCmdName(cmd), commandInstance);
+                                JCommander jc = cmdJc.getCommands().get(getCmdName(cmd));
+                                jc.setUsageFormatter(new UnixStyleUsageFormatter(jc));
                             } catch (Exception e) {
                                 System.err.println(
                                         "Initialize sub command failed: " + e.getMessage());

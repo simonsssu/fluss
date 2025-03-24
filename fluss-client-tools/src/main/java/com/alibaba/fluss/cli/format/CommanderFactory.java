@@ -17,6 +17,7 @@
 package com.alibaba.fluss.cli.format;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.UnixStyleUsageFormatter;
 
 import java.util.Objects;
 
@@ -28,6 +29,8 @@ public class CommanderFactory {
 
     public static JCommander createCommander(String name, JCommander parent, Object cmdObj) {
         String fullName = Objects.nonNull(parent) ? parent.getProgramName() + " " + name : name;
-        return JCommander.newBuilder().addObject(cmdObj).programName(fullName).build();
+        JCommander jc = JCommander.newBuilder().addObject(cmdObj).programName(fullName).build();
+        jc.setUsageFormatter(new UnixStyleUsageFormatter(jc));
+        return jc;
     }
 }
