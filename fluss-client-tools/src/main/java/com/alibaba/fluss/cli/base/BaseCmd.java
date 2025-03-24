@@ -16,13 +16,27 @@
 
 package com.alibaba.fluss.cli.base;
 
+import com.alibaba.fluss.cli.annotation.FlussCmd;
+import com.alibaba.fluss.cli.format.CommanderFactory;
 import com.alibaba.fluss.client.admin.Admin;
-
+import com.beust.jcommander.JCommander;
 import java.util.function.Supplier;
 
 public abstract class BaseCmd {
 
     protected Supplier<Admin> adminSupplier;
+
+    protected JCommander cmdJc;
+
+    protected abstract int execute();
+
+    public void attachParentCmd(JCommander parent) {
+        this.cmdJc = CommanderFactory.createCommander(getCmdName(), parent, this);
+    }
+
+    public void printUsage() {
+        cmdJc.usage();
+    }
 
     public void setAdminSupplier(Supplier<Admin> adminSupplier) {
         this.adminSupplier = adminSupplier;
@@ -34,5 +48,15 @@ public abstract class BaseCmd {
 
     public void setArgs(String[] args) {}
 
-    public abstract int execute();
+    protected String getCmdName() {
+        return getCmdName(this.getClass());
+    }
+
+    protected String getCmdName(Class<?> clazz) {
+        return clazz.getAnnotation(FlussCmd.class).name();
+    }
+
+    protected String getParentCmdName(Class<?> clazz) {
+        return clazz.getAnnotation(FlussCmd.class).parentCmd().getName();
+    }
 }

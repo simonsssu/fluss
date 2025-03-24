@@ -18,21 +18,19 @@ package com.alibaba.fluss.cli;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseGroupCmd;
+import com.alibaba.fluss.cli.format.CommanderFactory;
 import com.alibaba.fluss.cli.utils.ConnectionUtils;
 import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-
+import com.beust.jcommander.DefaultUsageFormatter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.internal.Maps;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.beust.jcommander.internal.Lists;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -41,6 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import org.apache.commons.lang3.StringUtils;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
@@ -71,11 +73,9 @@ public class FlussCliMain {
 
     private final JCommander jc;
 
-    private Supplier<Admin> adminSupplier = () -> ConnectionUtils.getAdmin(bootstrapServers);
+    private final Supplier<Admin> adminSupplier = () -> ConnectionUtils.getAdmin(bootstrapServers);
 
     private static final List<String> keywords = new ArrayList<>();
-
-    private static final Map<String, BaseGroupCmd> GROUP_CMD = Maps.newHashMap();
 
     public static void main(String[] args) {
         FlussCliMain cli = new FlussCliMain();
@@ -84,9 +84,7 @@ public class FlussCliMain {
     }
 
     public FlussCliMain() {
-        jc = new JCommander(this);
-        jc.setProgramName("fluss");
-
+        jc = CommanderFactory.createCommander("fluss", this);
         // Register commands
         autoRegisterCommands();
     }
@@ -101,12 +99,10 @@ public class FlussCliMain {
                     try {
                         if (flussAnnotation.isGroup()) {
                             BaseGroupCmd commandInstance =
-                                    (BaseGroupCmd)
-                                            c.getDeclaredConstructor(JCommander.class)
-                                                    .newInstance(jc);
+                                    (BaseGroupCmd) c.getDeclaredConstructor().newInstance();
                             jc.addCommand(flussAnnotation.name(), commandInstance);
+                            commandInstance.attachParentCmd(jc);
                             commandInstance.initSubCommand();
-                            GROUP_CMD.put(flussAnnotation.name(), commandInstance);
                         }
                     } catch (Exception e) {
                         throw new RuntimeException("Failed to auto-register commands", e);
@@ -193,7 +189,7 @@ public class FlussCliMain {
             }
 
             if (help || jc.getParsedCommand() == null) {
-                printUsage();
+                jc.usage();
                 return 0;
             }
 
@@ -232,7 +228,8 @@ public class FlussCliMain {
 
     private int dispatchCommand(String[] subArgs) {
         String command = jc.getParsedCommand();
-        BaseGroupCmd baseGroupCmd = GROUP_CMD.get(command);
+        List<Object> cmds = jc.getCommands().get(command).getObjects();
+        BaseGroupCmd baseGroupCmd = (BaseGroupCmd) cmds.get(0);
         baseGroupCmd.setArgs(subArgs);
         baseGroupCmd.setAdminSupplier(adminSupplier);
         return baseGroupCmd.execute();
@@ -242,19 +239,24 @@ public class FlussCliMain {
         System.out.println("Fluss CLI: v0.1.0\nRuntime Version: Fluss Core 0.7.0\n");
     }
 
-    private void printUsage() {
-        jc.usage();
-    }
-
     private void printCommandUsage() {
         String command = jc.getParsedCommand();
+        jc.getOptions();
         if (command != null) {
-            JCommander subCommander = jc.getCommands().get(command);
-            if (subCommander != null) {
-                subCommander.usage();
-            }
+            BaseGroupCmd groupCmd =
+                    (BaseGroupCmd) jc.getCommands().get(command).getObjects().get(0);
+            groupCmd.printUsage();
         } else {
-            printUsage();
+            jc.usage();
         }
+    }
+
+    private void printMainOptionsUsage() {
+        List<ParameterDescription> pd = Lists.newArrayList();
+        pd.addAll(jc.getFields().values());
+        pd.sort(jc.getParameterDescriptionComparator());
+        StringBuilder out = new StringBuilder();
+        ((DefaultUsageFormatter) jc.getUsageFormatter())
+                .appendAllParametersDetails(out, StringUtils.EMPTY, pd);
     }
 }
