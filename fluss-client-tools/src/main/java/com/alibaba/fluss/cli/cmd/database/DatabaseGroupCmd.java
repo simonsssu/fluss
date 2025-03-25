@@ -16,11 +16,8 @@
 
 package com.alibaba.fluss.cli.cmd.database;
 
-import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseGroupCmd;
-
 import com.beust.jcommander.Parameters;
 
-@FlussCmd(name = "database", isGroup = true, description = "Database management commands")
-@Parameters(commandDescription = "Database management operations")
+@Parameters(commandNames = "database", commandDescription = "Database management operations")
 public class DatabaseGroupCmd extends BaseGroupCmd {}
