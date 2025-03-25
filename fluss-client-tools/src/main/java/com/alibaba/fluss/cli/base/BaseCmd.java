@@ -17,11 +17,8 @@
 package com.alibaba.fluss.cli.base;
 
 import com.alibaba.fluss.cli.annotation.FlussCmd;
-import com.alibaba.fluss.cli.format.CommanderFactory;
 import com.alibaba.fluss.client.admin.Admin;
-
 import com.beust.jcommander.JCommander;
-
 import java.util.function.Supplier;
 
 public abstract class BaseCmd {
@@ -31,10 +28,6 @@ public abstract class BaseCmd {
     protected JCommander cmdJc;
 
     protected abstract int execute();
-
-    public void attachParentCmd(JCommander parent) {
-        this.cmdJc = CommanderFactory.createCommander(getCmdName(), parent, this);
-    }
 
     public void printUsage() {
         cmdJc.usage();

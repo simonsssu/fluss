@@ -18,17 +18,16 @@ package com.alibaba.fluss.cli.format;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.UnixStyleUsageFormatter;
-
-import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
 
 public class CommanderFactory {
 
     public static JCommander createCommander(String name, Object cmdObj) {
-        return createCommander(name, null, cmdObj);
+        return createCommander(name, StringUtils.EMPTY, cmdObj);
     }
 
-    public static JCommander createCommander(String name, JCommander parent, Object cmdObj) {
-        String fullName = Objects.nonNull(parent) ? parent.getProgramName() + " " + name : name;
+    public static JCommander createCommander(String name, String parentCmdName, Object cmdObj) {
+        String fullName = StringUtils.isNotEmpty(parentCmdName) ? parentCmdName + " " + name : name;
         JCommander jc = JCommander.newBuilder().addObject(cmdObj).programName(fullName).build();
         jc.setUsageFormatter(new UnixStyleUsageFormatter(jc));
         return jc;

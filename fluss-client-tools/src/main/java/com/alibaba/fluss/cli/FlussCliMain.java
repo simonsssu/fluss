@@ -16,7 +16,6 @@
 
 package com.alibaba.fluss.cli;
 
-import com.alibaba.fluss.cli.annotation.FlussCmd;
 import com.alibaba.fluss.cli.base.BaseGroupCmd;
 import com.alibaba.fluss.cli.format.CommanderFactory;
 import com.alibaba.fluss.cli.utils.ConnectionUtils;
@@ -24,7 +23,6 @@ import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
@@ -32,10 +30,6 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.UnixStyleUsageFormatter;
 import com.beust.jcommander.internal.Lists;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -44,9 +38,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Parameters(commandDescription = "Fluss Distributed Stream Processing Platform CLI")
+@Parameters(
+        commandNames = FlussCliMain.MAIN_CMD,
+        commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
+
     private static final Logger logger = LoggerFactory.getLogger(FlussCliMain.class);
 
     // Global Parameters
@@ -72,6 +72,8 @@ public class FlussCliMain {
             help = true)
     private boolean help;
 
+    protected static final String MAIN_CMD = "fluss";
+
     private final JCommander jc;
 
     private final Supplier<Admin> adminSupplier = () -> ConnectionUtils.getAdmin(bootstrapServers);
@@ -85,28 +87,33 @@ public class FlussCliMain {
     }
 
     public FlussCliMain() {
-        jc = CommanderFactory.createCommander("fluss", this);
+        jc = CommanderFactory.createCommander(MAIN_CMD, this);
         // Register commands
         autoRegisterCommands();
     }
 
     private void autoRegisterCommands() {
         Reflections reflections = new Reflections("com.alibaba.fluss.cli");
-        Set<Class<?>> commands = reflections.getTypesAnnotatedWith(FlussCmd.class);
+        Set<Class<?>> commands = reflections.getTypesAnnotatedWith(Parameters.class);
         commands.forEach(
                 c -> {
-                    FlussCmd flussAnnotation = c.getAnnotation(FlussCmd.class);
-                    keywords.add(flussAnnotation.name());
-                    try {
-                        if (flussAnnotation.isGroup()) {
+                    Parameters parameters = c.getAnnotation(Parameters.class);
+                    keywords.addAll(Arrays.asList(parameters.commandNames()));
+                    if (BaseGroupCmd.class.isAssignableFrom(c)) {
+                        try {
                             BaseGroupCmd commandInstance =
                                     (BaseGroupCmd) c.getDeclaredConstructor().newInstance();
-                            jc.addCommand(flussAnnotation.name(), commandInstance);
-                            commandInstance.attachParentCmd(jc);
-                            commandInstance.initSubCommand();
+                            Arrays.stream(parameters.commandNames())
+                                    .forEach(
+                                            cmdName ->
+                                                    jc.addCommand(
+                                                            cmdName,
+                                                            CommanderFactory.createCommander(
+                                                                    cmdName, commandInstance)));
+                            //                            commandInstance.initSubCommand();
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to auto-register commands", e);
                         }
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to auto-register commands", e);
                     }
                 });
     }
@@ -244,9 +251,7 @@ public class FlussCliMain {
         String command = jc.getParsedCommand();
         printMainOptionsUsage();
         if (command != null) {
-            BaseGroupCmd groupCmd =
-                    (BaseGroupCmd) jc.getCommands().get(command).getObjects().get(0);
-            groupCmd.printUsage();
+            jc.getCommands().get(command).usage();
         }
     }
 
