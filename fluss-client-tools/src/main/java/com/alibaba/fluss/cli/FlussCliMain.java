@@ -16,13 +16,14 @@
 
 package com.alibaba.fluss.cli;
 
-import com.alibaba.fluss.cli.base.BaseGroupCmd;
+import com.alibaba.fluss.cli.cmd.base.BaseCmdGroup;
 import com.alibaba.fluss.cli.format.CommanderFactory;
 import com.alibaba.fluss.cli.utils.ConnectionUtils;
 import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
@@ -30,6 +31,10 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.UnixStyleUsageFormatter;
 import com.beust.jcommander.internal.Lists;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -38,9 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Parameters(
         commandNames = FlussCliMain.MAIN_CMD,
@@ -72,7 +74,7 @@ public class FlussCliMain {
             help = true)
     private boolean help;
 
-    protected static final String MAIN_CMD = "fluss";
+    public static final String MAIN_CMD = "fluss";
 
     private final JCommander jc;
 
@@ -92,6 +94,34 @@ public class FlussCliMain {
         autoRegisterCommands();
     }
 
+    public int run(String[] args) {
+        try {
+            List<String[]> splitArgs = splitByKeywords(args);
+            jc.parse(splitArgs.get(0));
+
+            if (version) {
+                printVersion();
+                return 0;
+            }
+
+            if (help || jc.getParsedCommand() == null) {
+                jc.usage();
+                return 0;
+            }
+
+            loadConfig();
+            validateConfig();
+
+            return dispatchCommand(splitArgs.get(1));
+
+        } catch (ParameterException e) {
+            System.err.println("Main Cli Error: " + e.getMessage());
+            logger.error("Parameter error: {}", e.getMessage(), e);
+            printCommandUsage();
+            return 1;
+        }
+    }
+
     private void autoRegisterCommands() {
         Reflections reflections = new Reflections("com.alibaba.fluss.cli");
         Set<Class<?>> commands = reflections.getTypesAnnotatedWith(Parameters.class);
@@ -99,18 +129,17 @@ public class FlussCliMain {
                 c -> {
                     Parameters parameters = c.getAnnotation(Parameters.class);
                     keywords.addAll(Arrays.asList(parameters.commandNames()));
-                    if (BaseGroupCmd.class.isAssignableFrom(c)) {
+                    if (BaseCmdGroup.class.isAssignableFrom(c)) {
                         try {
-                            BaseGroupCmd commandInstance =
-                                    (BaseGroupCmd) c.getDeclaredConstructor().newInstance();
+                            BaseCmdGroup commandInstance =
+                                    (BaseCmdGroup) c.getDeclaredConstructor().newInstance();
                             Arrays.stream(parameters.commandNames())
                                     .forEach(
-                                            cmdName ->
-                                                    jc.addCommand(
-                                                            cmdName,
-                                                            CommanderFactory.createCommander(
-                                                                    cmdName, commandInstance)));
-                            //                            commandInstance.initSubCommand();
+                                            cmdName -> {
+                                                jc.addCommand(cmdName, commandInstance);
+                                                jc.setUsageFormatter(
+                                                        new UnixStyleUsageFormatter(jc));
+                                            });
                         } catch (Exception e) {
                             throw new RuntimeException("Failed to auto-register commands", e);
                         }
@@ -186,34 +215,6 @@ public class FlussCliMain {
         return coordinatorHost + ":" + coordinatorPort;
     }
 
-    public int run(String[] args) {
-        try {
-            List<String[]> splitArgs = splitByKeywords(args);
-            jc.parse(splitArgs.get(0));
-
-            if (version) {
-                printVersion();
-                return 0;
-            }
-
-            if (help || jc.getParsedCommand() == null) {
-                jc.usage();
-                return 0;
-            }
-
-            loadConfig();
-            validateConfig();
-
-            return dispatchCommand(splitArgs.get(1));
-
-        } catch (ParameterException e) {
-            System.err.println("Main Cli Error: " + e.getMessage());
-            logger.error("Parameter error: {}", e.getMessage(), e);
-            printCommandUsage();
-            return 1;
-        }
-    }
-
     private static List<String[]> splitByKeywords(String[] args) {
         int splitIndex = -1;
 
@@ -237,7 +238,7 @@ public class FlussCliMain {
     private int dispatchCommand(String[] subArgs) {
         String command = jc.getParsedCommand();
         List<Object> cmds = jc.getCommands().get(command).getObjects();
-        BaseGroupCmd baseGroupCmd = (BaseGroupCmd) cmds.get(0);
+        BaseCmdGroup baseGroupCmd = (BaseCmdGroup) cmds.get(0);
         baseGroupCmd.setArgs(subArgs);
         baseGroupCmd.setAdminSupplier(adminSupplier);
         return baseGroupCmd.execute();
@@ -251,7 +252,7 @@ public class FlussCliMain {
         String command = jc.getParsedCommand();
         printMainOptionsUsage();
         if (command != null) {
-            jc.getCommands().get(command).usage();
+            //            jc.getCommands().get(command).getObjects().usage();
         }
     }
 
