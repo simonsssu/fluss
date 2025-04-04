@@ -18,6 +18,7 @@ package com.alibaba.fluss.cli;
 
 import com.alibaba.fluss.cli.cmd.base.BaseCmdGroup;
 import com.alibaba.fluss.cli.format.CommanderFactory;
+import com.alibaba.fluss.cli.format.FlussCmdUsageFormat;
 import com.alibaba.fluss.cli.utils.ConnectionUtils;
 import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
@@ -137,8 +138,10 @@ public class FlussCliMain {
                                     .forEach(
                                             cmdName -> {
                                                 jc.addCommand(cmdName, commandInstance);
-                                                jc.setUsageFormatter(
-                                                        new UnixStyleUsageFormatter(jc));
+                                                jc.setUsageFormatter(new FlussCmdUsageFormat(jc));
+                                                JCommander groupJc = jc.findCommandByAlias(cmdName);
+                                                groupJc.setUsageFormatter(
+                                                        new FlussCmdUsageFormat(groupJc));
                                             });
                         } catch (Exception e) {
                             throw new RuntimeException("Failed to auto-register commands", e);

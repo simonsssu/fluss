@@ -16,11 +16,12 @@
 
 package com.alibaba.fluss.cli.cmd.base;
 
+import com.alibaba.fluss.cli.format.FlussCmdUsageFormat;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.UnixStyleUsageFormatter;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.Reflections;
 
@@ -107,10 +108,12 @@ public abstract class BaseCmdGroup extends BaseCmd {
                                         .forEach(
                                                 commandName -> {
                                                     cmdJc.addCommand(commandName, commandInstance);
+                                                    cmdJc.setUsageFormatter(
+                                                            new FlussCmdUsageFormat(cmdJc));
                                                     JCommander jc =
                                                             cmdJc.findCommandByAlias(commandName);
                                                     jc.setUsageFormatter(
-                                                            new UnixStyleUsageFormatter(jc));
+                                                            new FlussCmdUsageFormat(jc));
                                                 });
                             } catch (Exception e) {
                                 System.err.println(
