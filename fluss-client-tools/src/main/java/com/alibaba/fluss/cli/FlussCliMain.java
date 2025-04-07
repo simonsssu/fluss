@@ -18,7 +18,7 @@ package com.alibaba.fluss.cli;
 
 import com.alibaba.fluss.cli.cmd.base.BaseCmdGroup;
 import com.alibaba.fluss.cli.format.CommanderFactory;
-import com.alibaba.fluss.cli.format.FlussCmdUsageFormat;
+import com.alibaba.fluss.cli.utils.CmdUtils;
 import com.alibaba.fluss.cli.utils.ConnectionUtils;
 import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
@@ -32,7 +32,6 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.UnixStyleUsageFormatter;
 import com.beust.jcommander.internal.Lists;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 
 @Parameters(
@@ -92,7 +90,13 @@ public class FlussCliMain {
     public FlussCliMain() {
         jc = CommanderFactory.createCommander(MAIN_CMD, this);
         // Register commands
-        autoRegisterCommands();
+        CmdUtils.registerCommand(
+                jc,
+                BaseCmdGroup.class::isAssignableFrom,
+                c -> {
+                    Parameters param = c.getAnnotation(Parameters.class);
+                    keywords.addAll(Arrays.asList(param.commandNames()));
+                });
     }
 
     public int run(String[] args) {
@@ -121,33 +125,6 @@ public class FlussCliMain {
             printCommandUsage();
             return 1;
         }
-    }
-
-    private void autoRegisterCommands() {
-        Reflections reflections = new Reflections("com.alibaba.fluss.cli");
-        Set<Class<?>> commands = reflections.getTypesAnnotatedWith(Parameters.class);
-        commands.forEach(
-                c -> {
-                    Parameters parameters = c.getAnnotation(Parameters.class);
-                    keywords.addAll(Arrays.asList(parameters.commandNames()));
-                    if (BaseCmdGroup.class.isAssignableFrom(c)) {
-                        try {
-                            BaseCmdGroup commandInstance =
-                                    (BaseCmdGroup) c.getDeclaredConstructor().newInstance();
-                            Arrays.stream(parameters.commandNames())
-                                    .forEach(
-                                            cmdName -> {
-                                                jc.addCommand(cmdName, commandInstance);
-                                                jc.setUsageFormatter(new FlussCmdUsageFormat(jc));
-                                                JCommander groupJc = jc.findCommandByAlias(cmdName);
-                                                groupJc.setUsageFormatter(
-                                                        new FlussCmdUsageFormat(groupJc));
-                                            });
-                        } catch (Exception e) {
-                            throw new RuntimeException("Failed to auto-register commands", e);
-                        }
-                    }
-                });
     }
 
     private void loadConfig() {

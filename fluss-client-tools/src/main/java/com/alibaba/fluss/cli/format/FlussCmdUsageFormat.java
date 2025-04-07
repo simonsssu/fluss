@@ -17,11 +17,14 @@
 package com.alibaba.fluss.cli.format;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.JCommander.ProgramName;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.UnixStyleUsageFormatter;
 
-import java.util.Map;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class FlussCmdUsageFormat extends UnixStyleUsageFormatter {
 
@@ -35,51 +38,37 @@ public class FlussCmdUsageFormat extends UnixStyleUsageFormatter {
     @Override
     public void appendCommands(
             StringBuilder out, int indentCount, int descriptionIndent, String indent) {
-        boolean hasOnlyHiddenCommands = true;
-        for (Map.Entry<JCommander.ProgramName, JCommander> commands :
-                commander.getRawCommands().entrySet()) {
-            Object arg = commands.getValue().getObjects().get(0);
-            Parameters p = arg.getClass().getAnnotation(Parameters.class);
-            if (p == null || !p.hidden()) {
-                hasOnlyHiddenCommands = false;
-            }
+        List<Entry<ProgramName, JCommander>> visibleCommands =
+                commander.getRawCommands().entrySet().stream()
+                        .filter(
+                                entry -> {
+                                    Object arg = entry.getValue().getObjects().get(0);
+                                    Parameters p = arg.getClass().getAnnotation(Parameters.class);
+                                    return Objects.isNull(p) || !p.hidden();
+                                })
+                        .collect(Collectors.toList());
+        if (visibleCommands.isEmpty()) {
+            return;
         }
-
-        if (!hasOnlyHiddenCommands) {
-            out.append(indent + "  Commands:\n");
-            int dispNamePrefixIndent = 0;
-            for (Map.Entry<JCommander.ProgramName, JCommander> commands :
-                    commander.getRawCommands().entrySet()) {
-                Object arg = commands.getValue().getObjects().get(0);
-                Parameters p = arg.getClass().getAnnotation(Parameters.class);
-                if (Objects.isNull(p) || !p.hidden()) {
-                    JCommander.ProgramName programName = commands.getKey();
-                    String dispName = programName.getDisplayName();
-                    if (dispName.length() > dispNamePrefixIndent) {
-                        dispNamePrefixIndent = dispName.length();
-                    }
-                }
-            }
-            // The magic value 3 is the number of spaces between the name of the option and its
-            // description
-            for (Map.Entry<JCommander.ProgramName, JCommander> commands :
-                    commander.getRawCommands().entrySet()) {
-                Object arg = commands.getValue().getObjects().get(0);
-                Parameters p = arg.getClass().getAnnotation(Parameters.class);
-
-                if (p == null || !p.hidden()) {
-                    JCommander.ProgramName progName = commands.getKey();
-                    String dispName = progName.getDisplayName();
-                    String description =
-                            indent
-                                    + s(4)
-                                    + dispName
-                                    + s(dispNamePrefixIndent - dispName.length() + 8)
-                                    + getCommandDescription(progName.getName());
-                    wrapDescription(out, indentCount + descriptionIndent, description);
-                    out.append("\n");
-                }
-            }
+        int maxDispNameLength =
+                visibleCommands.stream()
+                        .map(entry -> entry.getKey().getDisplayName())
+                        .mapToInt(String::length)
+                        .max()
+                        .orElse(0);
+        int spaceBetweenNameAndDesc = 8;
+        for (Entry<ProgramName, JCommander> entry : visibleCommands) {
+            JCommander.ProgramName progName = entry.getKey();
+            String dispName = progName.getDisplayName();
+            String description = getCommandDescription(progName.getName());
+            String line =
+                    indent
+                            + s(4)
+                            + dispName
+                            + s(maxDispNameLength - dispName.length() + spaceBetweenNameAndDesc)
+                            + description;
+            wrapDescription(out, indentCount + descriptionIndent, line);
+            out.append("\n");
         }
     }
 }
