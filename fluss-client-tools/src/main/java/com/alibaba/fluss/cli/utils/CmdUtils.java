@@ -16,13 +16,54 @@
 
 package com.alibaba.fluss.cli.utils;
 
+import com.alibaba.fluss.cli.format.FlussCmdUsageFormat;
+
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameters;
+import org.reflections.Reflections;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
 public class CmdUtils {
-    public static String[] splitTablePath(String tablePath) {
-        int dotIndex = tablePath.indexOf('.');
-        if (dotIndex == -1 || dotIndex == 0 || dotIndex == tablePath.length() - 1) {
-            throw new IllegalArgumentException(
-                    "Invalid table path format. Expected: database.table");
-        }
-        return new String[] {tablePath.substring(0, dotIndex), tablePath.substring(dotIndex + 1)};
+
+    public static void registerCommand(JCommander cmdJc, Predicate<Class<?>> cmdPredicate) {
+        registerCommand(cmdJc, cmdPredicate, c -> {});
+    }
+
+    public static void registerCommand(
+            JCommander cmdJc, Predicate<Class<?>> cmdPredicate, Consumer<Class<?>> preHandle) {
+        Reflections reflections = new Reflections("com.alibaba.fluss.cli");
+        List<Class<?>> commands =
+                new ArrayList<>(reflections.getTypesAnnotatedWith(Parameters.class));
+        commands.sort(Comparator.comparing(Class::getName));
+        commands.stream()
+                .peek(preHandle)
+                .filter(cmdPredicate)
+                .forEach(
+                        cmd -> {
+                            try {
+                                Object commandInstance = cmd.getDeclaredConstructor().newInstance();
+                                Arrays.stream(cmd.getAnnotation(Parameters.class).commandNames())
+                                        .forEach(
+                                                commandName -> {
+                                                    cmdJc.addCommand(commandName, commandInstance);
+                                                    cmdJc.setUsageFormatter(
+                                                            new FlussCmdUsageFormat(cmdJc));
+                                                    JCommander jc =
+                                                            cmdJc.findCommandByAlias(commandName);
+                                                    jc.setUsageFormatter(
+                                                            new FlussCmdUsageFormat(jc));
+                                                });
+                            } catch (Exception e) {
+                                System.err.println(
+                                        "Initialize sub command failed: " + e.getMessage());
+                                throw new RuntimeException(e);
+                            }
+                        });
     }
 }

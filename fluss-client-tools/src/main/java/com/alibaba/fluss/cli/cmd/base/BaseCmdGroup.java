@@ -16,21 +16,17 @@
 
 package com.alibaba.fluss.cli.cmd.base;
 
-import com.alibaba.fluss.cli.format.FlussCmdUsageFormat;
+import com.alibaba.fluss.cli.utils.CmdUtils;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.Parameters;
 import org.apache.commons.lang3.StringUtils;
-import org.reflections.Reflections;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 public abstract class BaseCmdGroup extends BaseCmd {
 
@@ -38,7 +34,7 @@ public abstract class BaseCmdGroup extends BaseCmd {
 
     public BaseCmdGroup() {
         super();
-        initSubCommand();
+        CmdUtils.registerCommand(cmdJc, parentCmdPredicate());
     }
 
     @Override
@@ -55,7 +51,7 @@ public abstract class BaseCmdGroup extends BaseCmd {
     public int execute() {
         try {
             cmdJc.parse(args);
-            if (cmdJc.getParsedCommand() == null) {
+            if (Objects.isNull(cmdJc.getParsedCommand())) {
                 System.err.println(
                         StringUtils.capitalize(getCmdName())
                                 + " Command Error: No sub command specified!");
@@ -79,48 +75,18 @@ public abstract class BaseCmdGroup extends BaseCmd {
         }
     }
 
-    public void initSubCommand() {
-        Reflections reflections = new Reflections("com.alibaba.fluss.cli");
-        List<Class<?>> commands =
-                new ArrayList<>(reflections.getTypesAnnotatedWith(Parameters.class));
-        commands.sort(Comparator.comparing(Class::getName));
-        commands.stream()
-                .filter(
-                        cliClazz -> {
-                            Type type = cliClazz.getGenericSuperclass();
-                            if (type instanceof ParameterizedType) {
-                                ParameterizedType pt = (ParameterizedType) type;
-                                Type[] actualTypeArgs = pt.getActualTypeArguments();
-                                return actualTypeArgs.length > 0
-                                        && actualTypeArgs[0]
-                                                .getTypeName()
-                                                .equals(this.getClass().getName());
-                            } else {
-                                return false;
-                            }
-                        })
-                .forEach(
-                        cmd -> {
-                            try {
-                                BaseCliCmd<?> commandInstance =
-                                        (BaseCliCmd<?>) cmd.getDeclaredConstructor().newInstance();
-                                Arrays.stream(cmd.getAnnotation(Parameters.class).commandNames())
-                                        .forEach(
-                                                commandName -> {
-                                                    cmdJc.addCommand(commandName, commandInstance);
-                                                    cmdJc.setUsageFormatter(
-                                                            new FlussCmdUsageFormat(cmdJc));
-                                                    JCommander jc =
-                                                            cmdJc.findCommandByAlias(commandName);
-                                                    jc.setUsageFormatter(
-                                                            new FlussCmdUsageFormat(jc));
-                                                });
-                            } catch (Exception e) {
-                                System.err.println(
-                                        "Initialize sub command failed: " + e.getMessage());
-                                throw new RuntimeException(e);
-                            }
-                        });
+    private Predicate<Class<?>> parentCmdPredicate() {
+        return cliClazz -> {
+            Type type = cliClazz.getGenericSuperclass();
+            if (type instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType) type;
+                Type[] actualTypeArgs = pt.getActualTypeArguments();
+                return actualTypeArgs.length > 0
+                        && actualTypeArgs[0].getTypeName().equals(this.getClass().getName());
+            } else {
+                return false;
+            }
+        };
     }
 
     public BaseCliCmd<?> getCliCmd(String cmdName) {

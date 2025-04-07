@@ -20,6 +20,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.UnixStyleUsageFormatter;
 import org.apache.commons.lang3.StringUtils;
 
+import static com.beust.jcommander.DefaultUsageFormatter.s;
+
 public class CommanderFactory {
 
     public static JCommander createCommander(String name, Object cmdObj) {
@@ -27,7 +29,8 @@ public class CommanderFactory {
     }
 
     public static JCommander createCommander(String name, String parentCmdName, Object cmdObj) {
-        String fullName = StringUtils.isNotEmpty(parentCmdName) ? parentCmdName + " " + name : name;
+        String fullName =
+                StringUtils.isNotEmpty(parentCmdName) ? parentCmdName + s(1) + name : name;
         JCommander jc = JCommander.newBuilder().addObject(cmdObj).programName(fullName).build();
         jc.setUsageFormatter(new UnixStyleUsageFormatter(jc));
         return jc;
