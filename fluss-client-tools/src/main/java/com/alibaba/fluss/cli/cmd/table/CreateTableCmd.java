@@ -17,7 +17,6 @@
 package com.alibaba.fluss.cli.cmd.table;
 
 import com.alibaba.fluss.cli.cmd.base.BaseCliCmd;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
@@ -30,12 +29,12 @@ public class CreateTableCmd extends BaseCliCmd<TableParentCmd> {
     @Parameter(names = "--schema", description = "Schema definition file")
     private String schemaFile;
 
-    @Parameter(names = "--shards", description = "Number of shards")
-    private int shards = 1;
+    @Parameter(names = "--buckets", description = "Number of shards")
+    private int buckets = 1;
 
     @Override
     public int execute() {
-        System.out.printf("Creating table %s with %d shards\n", tablePath, shards);
+        System.out.printf("Creating table %s with %d shards\n", tablePath, buckets);
         if (schemaFile != null) {
             System.out.println("Using schema: " + schemaFile);
         }
