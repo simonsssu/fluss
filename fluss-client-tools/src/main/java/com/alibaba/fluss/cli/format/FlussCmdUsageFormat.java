@@ -18,9 +18,13 @@ package com.alibaba.fluss.cli.format;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.JCommander.ProgramName;
+import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.Strings;
 import com.beust.jcommander.UnixStyleUsageFormatter;
+import com.beust.jcommander.WrappedParameter;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -50,6 +54,7 @@ public class FlussCmdUsageFormat extends UnixStyleUsageFormatter {
         if (visibleCommands.isEmpty()) {
             return;
         }
+        out.append(indent).append(s(2)).append("Commands:\n");
         int maxDispNameLength =
                 visibleCommands.stream()
                         .map(entry -> entry.getKey().getDisplayName())
@@ -68,6 +73,75 @@ public class FlussCmdUsageFormat extends UnixStyleUsageFormatter {
                             + s(maxDispNameLength - dispName.length() + spaceBetweenNameAndDesc)
                             + description;
             wrapDescription(out, indentCount + descriptionIndent, line);
+            out.append("\n");
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void appendAllParametersDetails(
+            StringBuilder out,
+            int indentCount,
+            String indent,
+            List<ParameterDescription> sortedParameters) {
+        if (!sortedParameters.isEmpty()) {
+            out.append(indent).append("  Options:\n");
+        }
+
+        int prefixIndent =
+                sortedParameters.stream()
+                        .mapToInt(
+                                pd -> {
+                                    WrappedParameter param = pd.getParameter();
+                                    return (param.required() ? "* " : "  ").length()
+                                            + pd.getNames().length();
+                                })
+                        .max()
+                        .orElse(0);
+
+        // Append parameters
+        for (ParameterDescription pd : sortedParameters) {
+            WrappedParameter parameter = pd.getParameter();
+
+            String prefix = (parameter.required() ? "* " : "  ") + pd.getNames();
+            out.append(indent)
+                    .append("  ")
+                    .append(prefix)
+                    .append(s(prefixIndent - prefix.length()))
+                    .append(s(8));
+            final int initialLinePrefixLength = indent.length() + prefixIndent + 3;
+
+            String description = pd.getDescription();
+            Object def = pd.getDefault();
+
+            if (pd.isDynamicParameter()) {
+                String syntax =
+                        "(syntax: "
+                                + parameter.names()[0]
+                                + "key"
+                                + parameter.getAssignment()
+                                + "value)";
+                description += (description.isEmpty() ? "" : " ") + syntax;
+            }
+
+            if (def != null && !pd.isHelp()) {
+                String displayedDef =
+                        Strings.isStringEmpty(def.toString()) ? "<empty string>" : def.toString();
+                String defaultText =
+                        "(default: " + (parameter.password() ? "********" : displayedDef) + ")";
+                description += (description.isEmpty() ? "" : " ") + defaultText;
+            }
+            Class<?> type = pd.getParameterized().getType();
+
+            if (type.isEnum()) {
+                String valueList = EnumSet.allOf((Class<? extends Enum>) type).toString();
+                if (!description.contains("Options: " + valueList)) {
+                    String possibleValues = "(values: " + valueList + ")";
+                    description += (description.isEmpty() ? "" : " ") + possibleValues;
+                }
+            }
+            wrapDescription(
+                    out, indentCount + prefixIndent - 3, initialLinePrefixLength, description);
             out.append("\n");
         }
     }

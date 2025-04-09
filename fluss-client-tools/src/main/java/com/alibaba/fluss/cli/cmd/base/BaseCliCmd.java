@@ -22,7 +22,7 @@ import com.beust.jcommander.Strings;
 
 import java.util.Arrays;
 
-public abstract class BaseCliCmd<T extends BaseCmdGroup> extends BaseCmd {
+public abstract class BaseCliCmd<T extends BaseParentCmd> extends BaseCmd {
 
     @Override
     protected String fullNamePrefix() {

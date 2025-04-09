@@ -22,7 +22,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 @Parameters(commandNames = "create", commandDescription = "Create a new table")
-public class CreateTableCmd extends BaseCliCmd<TableCmdGroup> {
+public class CreateTableCmd extends BaseCliCmd<TableParentCmd> {
 
     @Parameter(description = "<table-path>", required = true)
     private String tablePath;

@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-package com.alibaba.fluss.cli.cmd.table;
+package com.alibaba.fluss.cli.cmd.database;
 
-import com.alibaba.fluss.cli.cmd.base.BaseCmdGroup;
+import com.alibaba.fluss.cli.cmd.base.BaseParentCmd;
 
 import com.beust.jcommander.Parameters;
 
-@Parameters(commandNames = "table", commandDescription = "Table management operations")
-public class TableCmdGroup extends BaseCmdGroup {}
+@Parameters(commandNames = "database", commandDescription = "Database management operations")
+public class DatabaseParentCmd extends BaseParentCmd {}
