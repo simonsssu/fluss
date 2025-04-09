@@ -22,7 +22,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 @Parameters(commandNames = "list", commandDescription = "List tables in a database")
-public class ListTableCmd extends BaseCliCmd<TableCmdGroup> {
+public class ListTableCmd extends BaseCliCmd<TableParentCmd> {
     @Parameter(
             names = {"--db", "-d"},
             description = "Database name",

@@ -28,11 +28,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public abstract class BaseCmdGroup extends BaseCmd {
+public abstract class BaseParentCmd extends BaseCmd {
 
     protected String[] args;
 
-    public BaseCmdGroup() {
+    public BaseParentCmd() {
         super();
         CmdUtils.registerCommand(cmdJc, parentCmdPredicate());
     }
@@ -65,7 +65,7 @@ public abstract class BaseCmdGroup extends BaseCmd {
                 throw new ParameterException("Unknown command: " + cmdJc.getParsedCommand());
             }
         } catch (ParameterException e) {
-            System.err.println(StringUtils.capitalize(getCmdName()) + " Error: " + e.getMessage());
+            System.err.println(" Command parameters missing: " + e.getMessage());
             if (e instanceof MissingCommandException) {
                 cmdJc.usage();
             } else {

@@ -16,7 +16,7 @@
 
 package com.alibaba.fluss.cli;
 
-import com.alibaba.fluss.cli.cmd.base.BaseCmdGroup;
+import com.alibaba.fluss.cli.cmd.base.BaseParentCmd;
 import com.alibaba.fluss.cli.format.CommanderFactory;
 import com.alibaba.fluss.cli.utils.CmdUtils;
 import com.alibaba.fluss.cli.utils.ConnectionUtils;
@@ -27,13 +27,8 @@ import com.alibaba.fluss.config.GlobalConfiguration;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.UnixStyleUsageFormatter;
-import com.beust.jcommander.internal.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -47,8 +42,6 @@ import java.util.function.Supplier;
         commandNames = FlussCliMain.MAIN_CMD,
         commandDescription = "Fluss Distributed Stream Processing Platform CLI")
 public class FlussCliMain {
-
-    private static final Logger logger = LoggerFactory.getLogger(FlussCliMain.class);
 
     // Global Parameters
     @Parameter(
@@ -92,7 +85,7 @@ public class FlussCliMain {
         // Register commands
         CmdUtils.registerCommand(
                 jc,
-                BaseCmdGroup.class::isAssignableFrom,
+                BaseParentCmd.class::isAssignableFrom,
                 c -> {
                     Parameters param = c.getAnnotation(Parameters.class);
                     keywords.addAll(Arrays.asList(param.commandNames()));
@@ -121,8 +114,7 @@ public class FlussCliMain {
 
         } catch (ParameterException e) {
             System.err.println("Main Cli Error: " + e.getMessage());
-            logger.error("Parameter error: {}", e.getMessage(), e);
-            printCommandUsage();
+            jc.usage();
             return 1;
         }
     }
@@ -218,7 +210,7 @@ public class FlussCliMain {
     private int dispatchCommand(String[] subArgs) {
         String command = jc.getParsedCommand();
         List<Object> cmds = jc.getCommands().get(command).getObjects();
-        BaseCmdGroup baseGroupCmd = (BaseCmdGroup) cmds.get(0);
+        BaseParentCmd baseGroupCmd = (BaseParentCmd) cmds.get(0);
         baseGroupCmd.setArgs(subArgs);
         baseGroupCmd.setAdminSupplier(adminSupplier);
         return baseGroupCmd.execute();
@@ -226,24 +218,5 @@ public class FlussCliMain {
 
     private void printVersion() {
         System.out.println("Fluss CLI: v0.1.0\nRuntime Version: Fluss Core 0.7.0\n");
-    }
-
-    private void printCommandUsage() {
-        String command = jc.getParsedCommand();
-        printMainOptionsUsage();
-        if (command != null) {
-            //            jc.getCommands().get(command).getObjects().usage();
-        }
-    }
-
-    private void printMainOptionsUsage() {
-        List<ParameterDescription> pd = Lists.newArrayList();
-        pd.addAll(jc.getFields().values());
-        pd.sort(jc.getParameterDescriptionComparator());
-        StringBuilder out = new StringBuilder();
-        out.append("fluss [options]\n");
-        ((UnixStyleUsageFormatter) jc.getUsageFormatter())
-                .appendAllParametersDetails(out, 6, "", pd);
-        System.out.println(out);
     }
 }

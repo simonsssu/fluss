@@ -17,7 +17,6 @@
 package com.alibaba.fluss.cli.format;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.UnixStyleUsageFormatter;
 import org.apache.commons.lang3.StringUtils;
 
 import static com.beust.jcommander.DefaultUsageFormatter.s;
@@ -32,7 +31,7 @@ public class CommanderFactory {
         String fullName =
                 StringUtils.isNotEmpty(parentCmdName) ? parentCmdName + s(1) + name : name;
         JCommander jc = JCommander.newBuilder().addObject(cmdObj).programName(fullName).build();
-        jc.setUsageFormatter(new UnixStyleUsageFormatter(jc));
+        jc.setUsageFormatter(new FlussCmdUsageFormat(jc));
         return jc;
     }
 }

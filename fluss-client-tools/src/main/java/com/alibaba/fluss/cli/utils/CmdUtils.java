@@ -52,8 +52,6 @@ public class CmdUtils {
                                         .forEach(
                                                 commandName -> {
                                                     cmdJc.addCommand(commandName, commandInstance);
-                                                    cmdJc.setUsageFormatter(
-                                                            new FlussCmdUsageFormat(cmdJc));
                                                     JCommander jc =
                                                             cmdJc.findCommandByAlias(commandName);
                                                     jc.setUsageFormatter(

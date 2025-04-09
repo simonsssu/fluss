@@ -14,12 +14,11 @@
  *  limitations under the License.
  */
 
-package com.alibaba.fluss.cli.cmd.cluster;
+package com.alibaba.fluss.cli.cmd.table;
 
-import com.alibaba.fluss.cli.cmd.base.BaseCmdGroup;
+import com.alibaba.fluss.cli.cmd.base.BaseParentCmd;
 
 import com.beust.jcommander.Parameters;
 
-// Cluster Command Group
-@Parameters(commandNames = "cluster", commandDescription = "Cluster management operations")
-public class ClusterCmdGroup extends BaseCmdGroup {}
+@Parameters(commandNames = "table", commandDescription = "Table management operations")
+public class TableParentCmd extends BaseParentCmd {}
