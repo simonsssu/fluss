@@ -30,11 +30,11 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class FlussCmdUsageFormat extends UnixStyleUsageFormatter {
+public class CmdUsageFormat extends UnixStyleUsageFormatter {
 
     private final JCommander commander;
 
-    public FlussCmdUsageFormat(JCommander commander) {
+    public CmdUsageFormat(JCommander commander) {
         super(commander);
         this.commander = commander;
     }

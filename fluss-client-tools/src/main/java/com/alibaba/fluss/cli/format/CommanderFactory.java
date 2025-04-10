@@ -31,7 +31,7 @@ public class CommanderFactory {
         String fullName =
                 StringUtils.isNotEmpty(parentCmdName) ? parentCmdName + s(1) + name : name;
         JCommander jc = JCommander.newBuilder().addObject(cmdObj).programName(fullName).build();
-        jc.setUsageFormatter(new FlussCmdUsageFormat(jc));
+        jc.setUsageFormatter(new CmdUsageFormat(jc));
         return jc;
     }
 }
