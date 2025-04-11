@@ -16,7 +16,7 @@
 
 package com.alibaba.fluss.cli.utils;
 
-import com.alibaba.fluss.cli.format.FlussCmdUsageFormat;
+import com.alibaba.fluss.cli.format.CmdUsageFormat;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameters;
@@ -55,8 +55,7 @@ public class CmdUtils {
                                                     cmdJc.addCommand(commandName, commandInstance);
                                                     JCommander jc =
                                                             cmdJc.findCommandByAlias(commandName);
-                                                    jc.setUsageFormatter(
-                                                            new FlussCmdUsageFormat(jc));
+                                                    jc.setUsageFormatter(new CmdUsageFormat(jc));
                                                 });
                             } catch (Exception e) {
                                 System.err.println(

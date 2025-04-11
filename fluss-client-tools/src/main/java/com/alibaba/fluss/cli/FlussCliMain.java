@@ -17,6 +17,7 @@
 package com.alibaba.fluss.cli;
 
 import com.alibaba.fluss.cli.cmd.base.BaseParentCmd;
+import com.alibaba.fluss.cli.format.CliStrings;
 import com.alibaba.fluss.cli.format.CommanderFactory;
 import com.alibaba.fluss.cli.utils.CmdUtils;
 import com.alibaba.fluss.cli.utils.ConnectionUtils;
@@ -82,6 +83,7 @@ public class FlussCliMain {
     }
 
     public FlussCliMain() {
+        printBanner();
         jc = CommanderFactory.createCommander(MAIN_CMD, this);
         // Register commands
         CmdUtils.registerCommand(
@@ -93,13 +95,17 @@ public class FlussCliMain {
                 });
     }
 
+    private static void printBanner() {
+        CliStrings.print();
+    }
+
     public int run(String[] args) {
         try {
             List<String[]> splitArgs = splitByKeywords(args);
             jc.parse(splitArgs.get(0));
 
             if (version) {
-                printVersion();
+                CliStrings.printVersion();
                 return 0;
             }
 

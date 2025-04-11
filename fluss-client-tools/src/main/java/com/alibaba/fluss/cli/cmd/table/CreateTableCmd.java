@@ -36,7 +36,7 @@ public class CreateTableCmd extends BaseCliCmd<TableParentCmd> {
 
     @Override
     public int execute() {
-        System.out.printf("Creating table %s with %d shards\n", tablePath, buckets);
+        System.out.printf("Creating table %s with %d buckets\n", tablePath, buckets);
         if (schemaFile != null) {
             System.out.println("Using schema: " + schemaFile);
         }
