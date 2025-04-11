@@ -37,10 +37,14 @@ public final class CliStrings {
                         + "| |   | | |_| \\__ \\__ \\ | \\__/\\ | |  __/ | | | |_ \n"
                         + "\\_|   |_|\\__,_|___/___/  \\____/_|_|\\___|_| |_|\\__|\n"
                         + "          \n"
-                        + "        Welcome to Fluss Client! Enter 'HELP;' to list all available commands. 'QUIT;' to exit.\n\n";
+                        + "        Welcome to Fluss Client! \nFluss CLI: v0.1.0 Runtime Version: Fluss Core 0.7.0\n\n";
     }
 
     public static void print() {
         System.out.println(MESSAGE_WELCOME);
+    }
+
+    public static void printVersion() {
+        System.out.println("Fluss CLI: v0.1.0\nRuntime Version: Fluss Core 0.7.0\n");
     }
 }

@@ -104,7 +104,7 @@ public class FlussCliMain {
             jc.parse(splitArgs.get(0));
 
             if (version) {
-                printVersion();
+                CliStrings.printVersion();
                 return 0;
             }
 
@@ -220,9 +220,5 @@ public class FlussCliMain {
         baseGroupCmd.setArgs(subArgs);
         baseGroupCmd.setAdminSupplier(adminSupplier);
         return baseGroupCmd.execute();
-    }
-
-    private void printVersion() {
-        System.out.println("Fluss CLI: v0.1.0\nRuntime Version: Fluss Core 0.7.0\n");
     }
 }
