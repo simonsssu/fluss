@@ -37,7 +37,7 @@ public final class CliStrings {
                         + "| |   | | |_| \\__ \\__ \\ | \\__/\\ | |  __/ | | | |_ \n"
                         + "\\_|   |_|\\__,_|___/___/  \\____/_|_|\\___|_| |_|\\__|\n"
                         + "          \n"
-                        + "        Welcome to Fluss Client! \nFluss CLI: v0.1.0 Runtime Version: Fluss Core 0.7.0\n\n";
+                        + "        Welcome to Fluss Client! \nFluss CLI: v0.1.0 Runtime Version: Fluss Core 0.7.0\n";
     }
 
     public static void print() {
