@@ -25,12 +25,10 @@ import com.alibaba.fluss.client.admin.Admin;
 import com.alibaba.fluss.config.ConfigOptions;
 import com.alibaba.fluss.config.Configuration;
 import com.alibaba.fluss.config.GlobalConfiguration;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -83,7 +81,6 @@ public class FlussCliMain {
     }
 
     public FlussCliMain() {
-        printBanner();
         jc = CommanderFactory.createCommander(MAIN_CMD, this);
         // Register commands
         CmdUtils.registerCommand(
@@ -110,6 +107,7 @@ public class FlussCliMain {
             }
 
             if (help || jc.getParsedCommand() == null) {
+                printBanner();
                 jc.usage();
                 return 0;
             }
