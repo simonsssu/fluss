@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+/** This is for Parent command implementation, e.g. table command, cluster command. */
 public abstract class BaseParentCmd extends BaseCmd {
 
     protected String[] args;

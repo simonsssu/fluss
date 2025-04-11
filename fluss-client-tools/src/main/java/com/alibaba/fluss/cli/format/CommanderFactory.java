@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import static com.beust.jcommander.DefaultUsageFormatter.s;
 
+/** Commander Factory to create a {@link JCommander}. */
 public class CommanderFactory {
 
     public static JCommander createCommander(String name, Object cmdObj) {

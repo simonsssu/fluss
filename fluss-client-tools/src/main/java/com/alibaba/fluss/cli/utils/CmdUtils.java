@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/** Utils for automatically register command. */
 public class CmdUtils {
 
     public static void registerCommand(JCommander cmdJc, Predicate<Class<?>> cmdPredicate) {

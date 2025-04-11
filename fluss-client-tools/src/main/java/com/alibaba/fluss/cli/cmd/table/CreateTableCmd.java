@@ -17,9 +17,11 @@
 package com.alibaba.fluss.cli.cmd.table;
 
 import com.alibaba.fluss.cli.cmd.base.BaseCliCmd;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+/** Create Table sub command. */
 @Parameters(commandNames = "create", commandDescription = "Create a new table")
 public class CreateTableCmd extends BaseCliCmd<TableParentCmd> {
 

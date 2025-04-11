@@ -21,6 +21,7 @@ import com.alibaba.fluss.cli.cmd.base.BaseCliCmd;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+/** Drop Table sub command. */
 @Parameters(commandNames = "drop", commandDescription = "Drop a table")
 public class DropTableCmd extends BaseCliCmd<TableParentCmd> {
     @Parameter(description = "<table-path>", required = true)

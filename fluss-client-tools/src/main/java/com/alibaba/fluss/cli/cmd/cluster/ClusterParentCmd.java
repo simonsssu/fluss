@@ -20,6 +20,6 @@ import com.alibaba.fluss.cli.cmd.base.BaseParentCmd;
 
 import com.beust.jcommander.Parameters;
 
-// Cluster Command Group
+/** Cluster related parent command. */
 @Parameters(commandNames = "cluster", commandDescription = "Cluster management operations")
 public class ClusterParentCmd extends BaseParentCmd {}

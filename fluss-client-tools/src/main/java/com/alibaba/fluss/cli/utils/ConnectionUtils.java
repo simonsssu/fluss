@@ -25,6 +25,7 @@ import com.alibaba.fluss.utils.MapUtils;
 
 import java.util.Map;
 
+/** Connection Utils to get connection from coordinator. */
 public class ConnectionUtils implements AutoCloseable {
     private static final Map<String, Connection> connections = MapUtils.newConcurrentHashMap();
 

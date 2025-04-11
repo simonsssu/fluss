@@ -22,6 +22,10 @@ import com.beust.jcommander.Strings;
 
 import java.util.Arrays;
 
+/**
+ * This is for child sub-command implementation, e.g. subcommands under parent [table] can be
+ * ListTableCommand, CreateTableCommand, DropTableCommand.
+ */
 public abstract class BaseCliCmd<T extends BaseParentCmd> extends BaseCmd {
 
     @Override

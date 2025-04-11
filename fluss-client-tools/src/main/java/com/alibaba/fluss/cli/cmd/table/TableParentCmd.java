@@ -20,5 +20,6 @@ import com.alibaba.fluss.cli.cmd.base.BaseParentCmd;
 
 import com.beust.jcommander.Parameters;
 
+/** Table related parent command. */
 @Parameters(commandNames = "table", commandDescription = "Table management operations")
 public class TableParentCmd extends BaseParentCmd {}

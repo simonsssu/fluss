@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+/** Main command entrance. */
 @Parameters(
         commandNames = FlussCliMain.MAIN_CMD,
         commandDescription = "Fluss Distributed Stream Processing Platform CLI")

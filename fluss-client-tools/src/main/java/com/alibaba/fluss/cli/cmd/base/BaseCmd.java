@@ -27,6 +27,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.function.Supplier;
 
+/** This is base cmd, both parent cmd and sub command should extend this class. */
 public abstract class BaseCmd {
 
     protected Supplier<Admin> adminSupplier;

@@ -20,5 +20,6 @@ import com.alibaba.fluss.cli.cmd.base.BaseParentCmd;
 
 import com.beust.jcommander.Parameters;
 
+/** Database related parent command. */
 @Parameters(commandNames = "database", commandDescription = "Database management operations")
 public class DatabaseParentCmd extends BaseParentCmd {}

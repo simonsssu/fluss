@@ -30,6 +30,12 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * A Fluss Cmd usage formatter. This works by overriding and modifying the output of {@link
+ * #appendCommands(StringBuilder, int, int, String)} and {@link
+ * #appendAllParametersDetails(StringBuilder, int, String, List)} which is inherited from {@link
+ * UnixStyleUsageFormatter}.
+ */
 public class FlussCmdUsageFormat extends UnixStyleUsageFormatter {
 
     private final JCommander commander;

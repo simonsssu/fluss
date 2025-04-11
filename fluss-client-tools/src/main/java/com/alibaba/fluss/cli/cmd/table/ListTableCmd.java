@@ -21,6 +21,7 @@ import com.alibaba.fluss.cli.cmd.base.BaseCliCmd;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+/** List Table sub command. */
 @Parameters(commandNames = "list", commandDescription = "List tables in a database")
 public class ListTableCmd extends BaseCliCmd<TableParentCmd> {
     @Parameter(
