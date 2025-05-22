@@ -32,14 +32,15 @@ public class ListTableCmd extends BaseCliCmd<TableParentCmd> {
     private String database;
 
     @Parameter(names = "--format", description = "Output format (text/table)")
-    private String format = "text";
+    private String format = "table";
 
     @Override
     public int execute() throws Exception {
         CompletableFuture<List<String>> tables = getAdmin().listTables(database);
-
         System.out.printf("Listing tables in %s (format: %s)\n", database, format);
         System.out.println(tables.get());
+
+        //        printResult()
         return 0;
     }
 }
