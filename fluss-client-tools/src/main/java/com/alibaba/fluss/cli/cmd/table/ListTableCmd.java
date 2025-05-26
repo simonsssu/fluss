@@ -17,6 +17,9 @@
 package com.alibaba.fluss.cli.cmd.table;
 
 import com.alibaba.fluss.cli.cmd.base.BaseCliCmd;
+import com.alibaba.fluss.cli.format.CliTable;
+import com.alibaba.fluss.cli.format.CliTable.CliOutputStyle;
+import com.alibaba.fluss.cli.format.CliTable.CliTableBuilder;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import java.util.List;
@@ -38,9 +41,10 @@ public class ListTableCmd extends BaseCliCmd<TableParentCmd> {
     public int execute() throws Exception {
         CompletableFuture<List<String>> tables = getAdmin().listTables(database);
         System.out.printf("Listing tables in %s (format: %s)\n", database, format);
-        System.out.println(tables.get());
-
-        //        printResult()
+        CliTableBuilder builder =
+                CliTable.builder().style(CliOutputStyle.of(format)).header("Table");
+        tables.get().forEach(builder::row);
+        builder.build().print();
         return 0;
     }
 }
