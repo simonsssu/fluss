@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.alibaba.fluss.cli.cmd.table;
+package com.alibaba.fluss.cli.cmd.database;
 
 import com.alibaba.fluss.cli.cmd.base.BaseCliCmd;
 import com.alibaba.fluss.cli.format.CliTable;
@@ -25,25 +25,20 @@ import com.beust.jcommander.Parameters;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-/** List Table sub command. */
-@Parameters(commandNames = "list", commandDescription = "List tables in a database")
-public class ListTableCmd extends BaseCliCmd<TableParentCmd> {
-    @Parameter(
-            names = {"--db", "-d"},
-            description = "Database name",
-            required = true)
-    private String database;
+/** List databases sub command. */
+@Parameters(commandNames = "list", commandDescription = "List databases")
+public class ListDatabaseCmd extends BaseCliCmd<DatabaseParentCmd> {
 
     @Parameter(names = "--format", description = "Output format (text/table)")
     private String format = "table";
 
     @Override
-    public int execute() throws Exception {
-        CompletableFuture<List<String>> tables = getAdmin().listTables(database);
-        System.out.printf("Listing tables in %s (format: %s)\n", database, format);
+    protected int execute() throws Exception {
+        CompletableFuture<List<String>> dbs = getAdmin().listDatabases();
+        System.out.printf("Listing databases in fluss cluster.(format: %s)\n", format);
         CliTableBuilder builder =
                 CliTable.builder().style(CliOutputStyle.of(format)).addHeader("Table");
-        tables.get().forEach(builder::addRow);
+        dbs.get().forEach(builder::addRow);
         builder.build().print();
         return 0;
     }

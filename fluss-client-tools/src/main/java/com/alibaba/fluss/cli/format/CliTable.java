@@ -28,11 +28,11 @@ import org.apache.commons.lang3.StringUtils;
 public class CliTable {
 
     // Stores column headers for the table
-    private List<String> headers = new ArrayList<>();
+    private final List<String> headers = new ArrayList<>();
     // Contains all data rows where each row is a list of string values
-    private List<List<String>> rows = new ArrayList<>();
+    private final List<List<String>> rows = new ArrayList<>();
     // Output style, Text or Table.
-    private CliOutputStyle style;
+    private CliOutputStyle style = CliOutputStyle.TABLE;
 
     private CliTable() {}
 
@@ -112,7 +112,7 @@ public class CliTable {
     }
 
     private void setHeader(String... headers) {
-        this.headers = Arrays.asList(headers);
+        this.headers.addAll(Arrays.asList(headers));
     }
 
     private void addRow(String... columns) {
@@ -145,7 +145,7 @@ public class CliTable {
     public static class CliTableBuilder {
         private final CliTable table;
 
-        public CliTableBuilder() {
+        private CliTableBuilder() {
             this.table = new CliTable();
         }
 
@@ -154,12 +154,12 @@ public class CliTable {
             return this;
         }
 
-        public CliTableBuilder header(String... headers) {
+        public CliTableBuilder addHeader(String... headers) {
             table.setHeader(headers);
             return this;
         }
 
-        public CliTableBuilder row(String... columns) {
+        public CliTableBuilder addRow(String... columns) {
             table.addRow(columns);
             return this;
         }
